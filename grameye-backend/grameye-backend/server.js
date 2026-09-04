@@ -9,6 +9,10 @@ const aiRoutes = require("./routes/aiRoutes");
 const villageRoutes = require("./routes/villageRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const rewardRoutes = require("./routes/rewardRoutes");
+const socialRoutes = require("./routes/socialRoutes");
+const healthRoutes = require("./routes/healthRoutes");
+const weatherRoutes = require("./routes/weatherRoutes");
+const communityRoutes = require("./routes/communityRoutes");
 
 const app = express();
 
@@ -26,6 +30,10 @@ app.use("/api/villages", villageRoutes);
 app.use("/api/village", villageRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/rewards", rewardRoutes);
+app.use("/api/social", socialRoutes);
+app.use("/api/health", healthRoutes);
+app.use("/api/weather", weatherRoutes);
+app.use("/api/community", communityRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));

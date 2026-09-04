@@ -23,6 +23,15 @@ import EmergencyAlertModal from "./EmergencyAlertModal.jsx";
 import KisanPortal from "./KisanPortal.jsx";
 import CertificatePortal from "./CertificatePortal.jsx";
 import LiveVillageKodebod from "./LiveVillageKodebod.jsx";
+import CoodenestConnect from "./CoodenestConnect.jsx";
+import HealthGuardAI from "./HealthGuardAI.jsx";
+import SmartWeatherAI from "./SmartWeatherAI.jsx";
+import PashuDoctorAI from "./PashuDoctorAI.jsx";
+import EmergencyHub from "./EmergencyHub.jsx";
+import LocalJobs from "./LocalJobs.jsx";
+import PowerReport from "./PowerReport.jsx";
+import FarmerCommunity from "./FarmerCommunity.jsx";
+import MyVillageHub from "./MyVillageHub.jsx";
 
 /* ============================================================
    DESIGN TOKENS
@@ -406,24 +415,32 @@ function Navbar({
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const isDark = page === "landing";
 
-  // Core 4 Direct Tabs on Desktop
+  // Core Direct Tabs on Desktop
   const coreLinks = role === "citizen"
     ? [
         ["citizenDashboard", "Dashboard"],
-        ["report", "Report"],
-        ["noticeBoard", "📢 Notices"],
+        ["coodenest", "🚀 Social Hub"],
+        ["healthGuard", "🩺 HealthGuard"],
+        ["smartWeather", "🌦️ Weather"],
         ["kisanPortal", "🌾 Kisan"]
       ]
     : [
         ["adminDashboard", "Command Center"],
+        ["coodenest", "🚀 Social Hub"],
+        ["healthGuard", "🩺 HealthGuard"],
         ["adminComplaints", "Complaints"],
-        ["noticeBoard", "📢 Notices"],
         ["kisanPortal", "🌾 Kisan"]
       ];
 
   // Services Dropdown Menu
   const serviceLinks = [
-    ["kodebod", "🌾 Live Kodebod (कोड़ेबोड दर्शन)", "Census 2011, Live Weather, Map & Facilities"],
+    ["myVillage", "🏡 My Village (मेरा गाँव डिजिटल हब)", "360° Village Identity, Live Stats & AI"],
+    ["kodebod", "🌾 Live Kodebod (गाँव दर्शन)", "Census 2011, Live Weather, Map & Facilities"],
+    ["emergencyHub", "🚑 Emergency Hub (आपातकाल)", "One-tap Ambulance 108, Police & SOS"],
+    ["pashuDoctor", "🐄 Pashu Doctor (पशु आरोग्य)", "Livestock Photo Triage & 1962 Ambulance"],
+    ["localJobs", "💼 Local Jobs (ग्रामीण रोजगार)", "Rural Employment, Skilled Work & Apply"],
+    ["powerReport", "⚡ Power Report (बिजली निगरानी)", "Outage Reporting, Safety & Substation"],
+    ["farmerCommunity", "🧑🌾 Kisan Chopal (किसान चौपाल)", "Farmer Q&A, AI Assistant & Experts"],
     ["certificates", "📜 Certificates (प्रमाण पत्र)", "Instant Digital Panchayat Certificates"],
     ["gramNidhi", "💰 Gram Nidhi (बजट लेजर)", "100% Transparent Public Works & Bills"],
     ["gramSabha", "🗳️ Gram Sabha (जनमत व प्रस्ताव)", "Propose Village Works & Community Voting"],
@@ -935,9 +952,19 @@ function Navbar({
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {[
                   ["citizenDashboard", "🏠 Dashboard (डैशबोर्ड)"],
+                  ["coodenest", "🚀 Coodenest Connect (सोशल हब)"],
+                  ["healthGuard", "🩺 HealthGuard AI (स्वास्थ्य व एम्बुलेंस)"],
+                  ["smartWeather", "🌦️ Smart Weather AI (मौसम पूर्वानुमान)"],
+                  ["myVillage", "🏡 My Village (मेरा गाँव डिजिटल हब)"],
+                  ["kodebod", "🌾 Live Kodebod (गाँव दर्शन)"],
+                  ["emergencyHub", "🚑 Emergency Hub (आपातकालीन 108)"],
+                  ["pashuDoctor", "🐄 Pashu Doctor (पशु आरोग्य)"],
+                  ["localJobs", "💼 Local Jobs (ग्रामीण रोजगार)"],
+                  ["powerReport", "⚡ Power Report (बिजली समस्या)"],
+                  ["farmerCommunity", "🧑🌾 Kisan Chopal (किसान चौपाल)"],
                   ["report", "📸 Report a Problem (समस्या दर्ज करें)"],
                   ["noticeBoard", "📢 Notice Board (नोटिस बोर्ड)"],
-                  ["kisanPortal", "🌾 Kisan Kendra (किसान फसल डॉक्टर व मंडी)"],
+                  ["kisanPortal", "🌾 Kisan Kendra (किसान फसल डॉक्टर)"],
                   ["certificates", "📜 Certificates (डिजिटल प्रमाण पत्र)"],
                   ["map", "🗺️ Village Map (गाँव का लाइव नक्शा)"],
                   ["gramNidhi", "💰 Gram Nidhi (बजट व ऑडिट लेजर)"],
@@ -1144,8 +1171,42 @@ function Landing({ setPage, lang, complaints }) {
             >
               🌾 Live Kodebod (गाँव दर्शन) ➔
             </button>
-            <button className="ge-btn ge-btn-outline" onClick={() => setPage("map")} style={{ padding: "14px 22px", fontSize: 14.5 }}>
-              {t.exploreVillage}
+            <button
+              className="ge-btn"
+              onClick={() => setPage("coodenest")}
+              style={{
+                background: "linear-gradient(135deg, rgba(14,26,19,0.85) 0%, rgba(31,77,54,0.9) 100%)",
+                color: "#FBF8F0",
+                border: "1.5px solid var(--turmeric)",
+                padding: "14px 20px",
+                fontSize: 14,
+                fontWeight: 800,
+                borderRadius: 12
+              }}
+            >
+              🚀 Coodenest Connect
+            </button>
+            <button
+              className="ge-btn"
+              onClick={() => setPage("healthGuard")}
+              style={{
+                background: "#D64545",
+                color: "#fff",
+                border: "none",
+                padding: "14px 20px",
+                fontSize: 14,
+                fontWeight: 800,
+                borderRadius: 12
+              }}
+            >
+              🩺 HealthGuard AI
+            </button>
+            <button
+              className="ge-btn ge-btn-outline"
+              onClick={() => setPage("smartWeather")}
+              style={{ padding: "14px 20px", fontSize: 14 }}
+            >
+              🌦️ Weather
             </button>
           </div>
         </div>
@@ -3467,6 +3528,15 @@ export default function GramEyeApp() {
       {page === "complaintDetail" && <ComplaintDetail complaint={selectedComplaint} setPage={setPage} updateComplaint={updateComplaint} addXp={addXp} />}
       {page === "map" && <MapPage complaints={complaints} />}
       {page === "kodebod" && <LiveVillageKodebod onNavigateReport={() => setPage("report")} onNavigateKisan={() => setPage("kisanPortal")} />}
+      {page === "myVillage" && <MyVillageHub setPage={setPage} />}
+      {page === "coodenest" && <CoodenestConnect currentUser={currentUser} addXp={addXp} />}
+      {page === "healthGuard" && <HealthGuardAI />}
+      {page === "smartWeather" && <SmartWeatherAI />}
+      {page === "pashuDoctor" && <PashuDoctorAI />}
+      {page === "emergencyHub" && <EmergencyHub />}
+      {page === "localJobs" && <LocalJobs currentUser={currentUser} addXp={addXp} />}
+      {page === "powerReport" && <PowerReport currentUser={currentUser} addXp={addXp} />}
+      {page === "farmerCommunity" && <FarmerCommunity currentUser={currentUser} addXp={addXp} />}
       {page === "noticeBoard" && <NoticeBoard currentUser={currentUser} role={role} addXp={addXp} lang={lang} />}
       {page === "kisanPortal" && <KisanPortal addXp={addXp} />}
       {page === "certificates" && <CertificatePortal currentUser={currentUser} addXp={addXp} />}
