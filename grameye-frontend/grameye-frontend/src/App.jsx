@@ -1,16 +1,27 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
-  MapPin, Camera, Mic, FileText, ChevronRight, ChevronLeft, CheckCircle2,
+  MapPin, Camera, Mic, FileText, ChevronRight, ChevronLeft, ChevronDown, CheckCircle2,
   AlertTriangle, TrendingUp, Users, Award, Droplet, Zap, Trash2, Construction,
   School, HeartPulse, Bus, Trees, Home, LayoutDashboard, Map as MapIcon,
   BarChart3, Bell, Settings, LogOut, Search, Sparkles, Upload, X, Star,
   Trophy, Flame, ShieldAlert, Clock, ArrowRight, Menu, Globe, User, Loader2,
-  Check, RotateCcw, Sprout, Sun, Waves, Building2, Leaf, MessageSquare, Send
+  Check, RotateCcw, Sprout, Sun, Waves, Building2, Leaf, MessageSquare, Send,
+  Navigation, RefreshCw, Volume2, Image as ImageIcon
 } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie,
   Cell, LineChart, Line, CartesianGrid,
 } from "recharts";
+import Footer from "./Footer.jsx";
+import AuthModal, { LogoutConfirmModal } from "./AuthModal.jsx";
+import WorkOrderModal from "./WorkOrderModal.jsx";
+import GramNidhi from "./GramNidhi.jsx";
+import GramSabha from "./GramSabha.jsx";
+import VoiceSahayakModal from "./VoiceSahayakModal.jsx";
+import NoticeBoard from "./NoticeBoard.jsx";
+import EmergencyAlertModal from "./EmergencyAlertModal.jsx";
+import KisanPortal from "./KisanPortal.jsx";
+import CertificatePortal from "./CertificatePortal.jsx";
 
 /* ============================================================
    DESIGN TOKENS
@@ -55,6 +66,11 @@ const TOKENS = `
   @keyframes geFloat{ 0%,100%{ transform:translateY(0px) } 50%{ transform:translateY(-10px) } }
   @keyframes geSpin{ to{ transform:rotate(360deg) } }
   @keyframes geGrow{ from{ width:0 } }
+  @keyframes geWave{ 0%,100%{ height: 6px } 50%{ height: 28px } }
+  @keyframes geLaserScan{ 0%{ top: 4%; opacity: 0.7 } 50%{ opacity: 1 } 100%{ top: 92%; opacity: 0.7 } }
+  @keyframes gePulseGlow{ 0%{ box-shadow: 0 0 0 0 rgba(232,163,61,0.7) } 70%{ box-shadow: 0 0 0 14px rgba(232,163,61,0) } 100%{ box-shadow: 0 0 0 0 rgba(232,163,61,0) } }
+  @keyframes geSuccessPop{ 0%{ transform: scale(0.75); opacity: 0 } 70%{ transform: scale(1.06); opacity: 1 } 100%{ transform: scale(1); opacity: 1 } }
+  @keyframes geRadarPing{ 0%{ transform: scale(0.8); opacity: 0.9 } 100%{ transform: scale(2.2); opacity: 0 } }
   @media (prefers-reduced-motion: reduce){
     .ge-root *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
   }
@@ -344,7 +360,7 @@ function VillageScene() {
         const r = e.currentTarget.getBoundingClientRect();
         setMx(((e.clientX - r.left) / r.width - 0.5) * 14);
       }}
-      style={{ position: "relative", height: 420, borderRadius: 24, overflow: "hidden", background: "linear-gradient(180deg,#F4C374 0%, #E8A33D 32%, #1F4D36 33%, #0B1710 100%)" }}
+      style={{ position: "relative", minHeight: 250, height: "clamp(250px, 42vw, 420px)", width: "100%", maxWidth: "100%", borderRadius: 24, overflow: "hidden", background: "linear-gradient(180deg,#F4C374 0%, #E8A33D 32%, #1F4D36 33%, #0B1710 100%)" }}
     >
       <div style={{ position: "absolute", top: 30, right: 60, width: 70, height: 70, borderRadius: 99, background: "#FBF3D8", boxShadow: "0 0 60px 20px rgba(251,243,216,0.5)", transform: `translateX(${mx * 0.4}px)` }} />
       {[...Array(5)].map((_, i) => (
@@ -376,74 +392,698 @@ function VillageScene() {
 }
 
 /* ============================================================
-   NAVBAR
+   NAVBAR (CLEAN, MODULAR & ZERO-OVERLAP RESPONSIVE)
    ============================================================ */
-function Navbar({ page, setPage, lang, setLang, role, setRole, xp }) {
-  const [open, setOpen] = useState(false);
+function Navbar({
+  page, setPage, lang, setLang, role, setRole, xp,
+  currentUser, onOpenAuthModal, onOpenLogoutModal,
+  onOpenVoiceSahayak, onOpenEmergencyAlert
+}) {
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const isDark = page === "landing";
-  const links = role === "citizen"
-    ? [["citizenDashboard", "Dashboard"], ["report", "Report"], ["map", "Village Map"], ["rewards", "Rewards"]]
-    : [["adminDashboard", "Command Center"], ["adminComplaints", "Complaints"], ["map", "Village Map"], ["rewards", "Community"]];
+
+  // Core 4 Direct Tabs on Desktop
+  const coreLinks = role === "citizen"
+    ? [
+        ["citizenDashboard", "Dashboard"],
+        ["report", "Report"],
+        ["noticeBoard", "📢 Notices"],
+        ["kisanPortal", "🌾 Kisan"]
+      ]
+    : [
+        ["adminDashboard", "Command Center"],
+        ["adminComplaints", "Complaints"],
+        ["noticeBoard", "📢 Notices"],
+        ["kisanPortal", "🌾 Kisan"]
+      ];
+
+  // Services Dropdown Menu
+  const serviceLinks = [
+    ["certificates", "📜 Certificates (प्रमाण पत्र)", "Instant Digital Panchayat Certificates"],
+    ["gramNidhi", "💰 Gram Nidhi (बजट लेजर)", "100% Transparent Public Works & Bills"],
+    ["gramSabha", "🗳️ Gram Sabha (जनमत व प्रस्ताव)", "Propose Village Works & Community Voting"],
+    ["map", "🗺️ Village Map (गाँव का नक्शा)", "GIS Ward Map with Real-time Complaints"],
+    ["rewards", "🏆 Rewards & Karma (सम्मान)", "Citizen Karma, Badges & Leaderboard"]
+  ];
+
+  const isServiceActive = serviceLinks.some(([k]) => k === page);
+
+  const navigateTo = (p) => {
+    setPage(p);
+    setServicesOpen(false);
+    setMobileDrawerOpen(false);
+    setProfileOpen(false);
+  };
+
   return (
-    <div style={{
-      position: "sticky", top: 0, zIndex: 40,
-      background: isDark ? "rgba(11,23,16,0.72)" : "rgba(251,248,240,0.85)",
-      backdropFilter: "blur(10px)", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(14,26,19,0.08)"}`
-    }}>
-      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => setPage("landing")}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--turmeric)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <>
+      <div style={{
+        position: "sticky", top: 0, zIndex: 40,
+        background: isDark ? "rgba(11,23,16,0.95)" : "rgba(251,248,240,0.96)",
+        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(14,26,19,0.08)"}`
+      }}>
+        <div style={{
+        maxWidth: 1240,
+        margin: "0 auto",
+        padding: "10px 18px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12
+      }}>
+        {/* BRAND LOGO */}
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flexShrink: 0 }}
+          onClick={() => navigateTo("landing")}
+        >
+          <div style={{
+            width: 34, height: 34, borderRadius: 10, background: "var(--turmeric)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 12px rgba(232,163,61,0.35)"
+          }}>
             <Sprout size={19} color="#231402" />
           </div>
-          <span className="ge-serif" style={{ fontSize: 19, fontWeight: 600, color: isDark ? "#FBF8F0" : "#132A1C" }}>GramEye <span style={{ color: "var(--turmeric)" }}>AI</span></span>
+          <span className="ge-serif" style={{ fontSize: 20, fontWeight: 700, color: isDark ? "#FBF8F0" : "#132A1C", letterSpacing: "0.01em" }}>
+            GramEye <span style={{ color: "var(--turmeric)" }}>AI</span>
+          </span>
         </div>
 
-        <div className="ge-scroll" style={{ display: "flex", gap: 4, overflowX: "auto" }}>
-          {links.map(([key, label]) => (
-            <button key={key} onClick={() => setPage(key)} className="ge-btn" style={{
-              background: page === key ? (isDark ? "rgba(255,255,255,0.14)" : "rgba(14,26,19,0.08)") : "transparent",
-              color: isDark ? "#FBF8F0" : "#132A1C", padding: "9px 14px", fontSize: 13.5, whiteSpace: "nowrap"
-            }}>{label}</button>
+        {/* DESKTOP NAV LINKS (VISIBLE ON >= 921px) */}
+        <div className="ge-desktop-nav" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {coreLinks.map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => navigateTo(key)}
+              className="ge-btn"
+              style={{
+                background: page === key ? (isDark ? "rgba(255,255,255,0.14)" : "rgba(14,26,19,0.08)") : "transparent",
+                color: isDark ? "#FBF8F0" : "#132A1C",
+                padding: "8px 12px",
+                fontSize: 13,
+                fontWeight: page === key ? 800 : 600,
+                whiteSpace: "nowrap"
+              }}
+            >
+              {label}
+            </button>
           ))}
+
+          {/* Services Dropdown Button */}
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => setServicesOpen(!servicesOpen)}
+              className="ge-btn"
+              style={{
+                background: isServiceActive
+                  ? (isDark ? "rgba(232,163,61,0.22)" : "rgba(232,163,61,0.15)")
+                  : (servicesOpen ? (isDark ? "rgba(255,255,255,0.1)" : "rgba(14,26,19,0.06)") : "transparent"),
+                color: isServiceActive ? "var(--turmeric)" : (isDark ? "#FBF8F0" : "#132A1C"),
+                padding: "8px 12px",
+                fontSize: 13,
+                fontWeight: isServiceActive ? 800 : 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                whiteSpace: "nowrap"
+              }}
+            >
+              <span>🏛️ ग्राम सेवाएँ (Services)</span>
+              <ChevronDown size={14} style={{ transform: servicesOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+            </button>
+
+            {/* Services Floating Card */}
+            {servicesOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 310,
+                  background: "#FBF8F0",
+                  border: "1px solid var(--line-dark)",
+                  borderRadius: 16,
+                  boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
+                  padding: 8,
+                  zIndex: 80,
+                  animation: "geFadeUp 0.2s ease-out"
+                }}
+              >
+                {serviceLinks.map(([key, label, desc]) => (
+                  <div
+                    key={key}
+                    onClick={() => navigateTo(key)}
+                    style={{
+                      padding: "9px 12px",
+                      borderRadius: 10,
+                      background: page === key ? "rgba(31,77,54,0.09)" : "transparent",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 2,
+                      transition: "background .15s"
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(31,77,54,0.07)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = page === key ? "rgba(31,77,54,0.09)" : "transparent")}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: page === key ? "var(--paddy)" : "#0E1A13" }}>
+                      {label}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                      {desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button className="ge-btn" onClick={() => setLang(lang === "en" ? "hi" : "en")} style={{ background: "transparent", color: isDark ? "#FBF8F0" : "#132A1C", padding: "8px 10px", fontSize: 13 }}>
-            <Globe size={15} /> {lang === "en" ? "हिं" : "EN"}
+        {/* RIGHT ACTION BUTTONS (NO OVERLAP) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
+          {/* Emergency Siren Pill Button */}
+          <button
+            type="button"
+            onClick={onOpenEmergencyAlert}
+            style={{
+              background: "rgba(214,69,69,0.14)",
+              color: "var(--crit)",
+              border: "1.5px solid var(--crit)",
+              borderRadius: 999,
+              padding: "5px 10px",
+              fontSize: 11.5,
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              cursor: "pointer",
+              whiteSpace: "nowrap"
+            }}
+            title="आपदा सायरन अलर्ट"
+          >
+            <span>🚨</span>
+            <span className="ge-hide-sm">आपदा</span>
           </button>
-          <div className="ge-chip" style={{ background: "var(--turmeric)" + "22", color: "#B97417", gap: 6 }}>
-            <Flame size={13} /> {xp} XP
+
+          {/* AI Voice Sahayak Button */}
+          <button
+            type="button"
+            className="ge-hide-sm"
+            onClick={onOpenVoiceSahayak}
+            style={{
+              background: "rgba(232,163,61,0.16)",
+              color: "#995C08",
+              border: "1.5px solid var(--turmeric)",
+              borderRadius: 999,
+              padding: "5px 10px",
+              fontSize: 11.5,
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              cursor: "pointer",
+              whiteSpace: "nowrap"
+            }}
+            title="बोलकर सवाल पूछें"
+          >
+            <Mic size={13} color="#995C08" />
+            <span>AI बोलें</span>
+          </button>
+
+          {/* Language Toggle */}
+          <button
+            type="button"
+            onClick={() => setLang(lang === "en" ? "hi" : "en")}
+            className="ge-btn ge-hide-sm"
+            style={{
+              background: "transparent",
+              color: isDark ? "#FBF8F0" : "#132A1C",
+              padding: "5px 8px",
+              fontSize: 12,
+              fontWeight: 700
+            }}
+          >
+            <Globe size={13} /> {lang === "en" ? "हिं" : "EN"}
+          </button>
+
+          {/* XP Chip (Hidden on very small screens) */}
+          <div className="ge-chip ge-hide-sm" style={{ background: "var(--turmeric)22", color: "#B97417", gap: 4, padding: "5px 9px", fontSize: 11 }}>
+            <Flame size={12} /> {xp} XP
           </div>
-          <select value={role} onChange={e => { setRole(e.target.value); setPage(e.target.value === "citizen" ? "citizenDashboard" : "adminDashboard"); }}
-            style={{ border: "1px solid rgba(140,140,140,0.3)", borderRadius: 999, padding: "8px 12px", fontSize: 12.5, fontWeight: 700, background: isDark ? "rgba(255,255,255,0.08)" : "#fff", color: isDark ? "#FBF8F0" : "#132A1C" }}>
-            <option value="citizen">👤 Citizen — Rahul</option>
-            <option value="admin">🛡️ Panchayat Admin</option>
-          </select>
+
+          {/* User Profile Pill / Menu */}
+          {currentUser ? (
+            <div style={{ position: "relative" }} className="ge-hide-sm">
+              <button
+                type="button"
+                onClick={() => setProfileOpen(!profileOpen)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "3px 8px 3px 3px",
+                  borderRadius: 999,
+                  border: `1.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(14,26,19,0.12)"}`,
+                  background: isDark ? "rgba(255,255,255,0.08)" : "#fff",
+                  color: isDark ? "#FBF8F0" : "#0E1A13",
+                  cursor: "pointer"
+                }}
+              >
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 99,
+                    background: role === "admin" ? "var(--turmeric)" : "var(--paddy)",
+                    color: role === "admin" ? "#231402" : "#fff",
+                    fontWeight: 800,
+                    fontSize: 11.5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  {(currentUser.fullName || "U").charAt(0).toUpperCase()}
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700 }} className="ge-hide-sm">
+                  {(currentUser.fullName || "Citizen").split(" ")[0]}
+                </span>
+                <ChevronDown size={11} color="var(--muted)" />
+              </button>
+
+              {/* Profile Dropdown */}
+              {profileOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    right: 0,
+                    width: 240,
+                    background: "#FBF8F0",
+                    border: "1px solid var(--line-dark)",
+                    borderRadius: 16,
+                    boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
+                    padding: 14,
+                    zIndex: 90,
+                    color: "#0E1A13",
+                    animation: "geFadeUp 0.2s ease-out"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 12,
+                        background: role === "admin" ? "var(--turmeric)" : "var(--paddy)",
+                        color: role === "admin" ? "#231402" : "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 800,
+                        fontSize: 14
+                      }}
+                    >
+                      {(currentUser.fullName || "U").charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 13 }}>{currentUser.fullName}</div>
+                      <div style={{ fontSize: 10.5, color: "var(--muted)" }}>+91 {currentUser.mobile || "6268814185"}</div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "rgba(31,77,54,0.06)",
+                      borderRadius: 8,
+                      padding: "7px 10px",
+                      marginBottom: 10,
+                      fontSize: 11,
+                      display: "flex",
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <span>📍 {currentUser.ward || "Ward 3"}</span>
+                    <span style={{ fontWeight: 700, color: "var(--turmeric)" }}>{xp} XP</span>
+                  </div>
+
+                  <div style={{ borderTop: "1px solid var(--line-dark)", paddingTop: 10 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        onOpenLogoutModal();
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: "rgba(214,69,69,0.08)",
+                        color: "var(--crit)",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                    >
+                      <LogOut size={13} /> Log Out / साइन आउट
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="ge-btn ge-btn-primary ge-hide-sm"
+              onClick={onOpenAuthModal}
+              style={{ padding: "6px 12px", fontSize: 12 }}
+            >
+              <User size={13} /> Sign In
+            </button>
+          )}
+
+          {/* MOBILE HAMBURGER BUTTON (VISIBLE ONLY ON <= 920px) */}
+          <button
+            type="button"
+            className="ge-mobile-menu-btn"
+            onClick={() => setMobileDrawerOpen(true)}
+            style={{
+              background: "none",
+              border: "none",
+              color: isDark ? "#FBF8F0" : "#132A1C",
+              padding: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+            title="Open Mobile Navigation Menu"
+          >
+            <Menu size={22} />
+          </button>
         </div>
       </div>
     </div>
+
+      {/* MOBILE SLIDE-OUT DRAWER OVERLAY (FULL VIEWPORT) */}
+      {mobileDrawerOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: "100vw",
+            height: "100vh",
+            zIndex: 99999,
+            background: "rgba(8, 19, 12, 0.78)",
+            display: "flex",
+            justifyContent: "flex-end",
+            animation: "geFadeIn 0.2s ease-out"
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setMobileDrawerOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: "86%",
+              maxWidth: 340,
+              height: "100vh",
+              background: "#FBF8F0",
+              boxShadow: "-10px 0 35px rgba(0,0,0,0.45)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              padding: "20px 16px",
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
+              zIndex: 100000,
+              animation: "geFadeUp 0.25s ease-out"
+            }}
+          >
+            <div>
+              {/* Drawer Top Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--turmeric)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Sprout size={18} color="#231402" />
+                  </div>
+                  <span className="ge-serif" style={{ fontSize: 18, fontWeight: 700 }}>GramEye AI</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setMobileDrawerOpen(false)}
+                  style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", padding: 4 }}
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              {/* User Greeting Card */}
+              {currentUser ? (
+                <div style={{ background: "#fff", border: "1px solid var(--line-dark)", borderRadius: 14, padding: "12px 14px", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 99, background: "var(--paddy)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>
+                      {(currentUser.fullName || "U").charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 13.5 }}>{currentUser.fullName}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>📍 {currentUser.ward || "Ward 3"} • <span style={{ color: "var(--turmeric)", fontWeight: 700 }}>{xp} XP</span></div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ marginBottom: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      onOpenAuthModal();
+                    }}
+                    className="ge-btn ge-btn-primary"
+                    style={{ width: "100%", padding: "10px", fontSize: 12.5 }}
+                  >
+                    <User size={14} /> Sign In (लॉगिन / खाता बनाएं)
+                  </button>
+                </div>
+              )}
+
+              {/* Mobile Quick Action Pills (Language & Voice Assistant) */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+                <button
+                  type="button"
+                  onClick={() => setLang(lang === "en" ? "hi" : "en")}
+                  style={{
+                    background: "rgba(14,26,19,0.06)",
+                    border: "1px solid var(--line-dark)",
+                    borderRadius: 10,
+                    padding: "8px 10px",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    cursor: "pointer",
+                    color: "var(--ink-text)"
+                  }}
+                >
+                  <Globe size={14} />
+                  <span>{lang === "en" ? "हिन्दी करें" : "English"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    onOpenVoiceSahayak();
+                  }}
+                  style={{
+                    background: "rgba(232,163,61,0.16)",
+                    border: "1px solid var(--turmeric)",
+                    borderRadius: 10,
+                    padding: "8px 10px",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    cursor: "pointer",
+                    color: "#995C08"
+                  }}
+                >
+                  <Mic size={14} />
+                  <span>AI बोलें</span>
+                </button>
+              </div>
+
+              {/* All Navigation Links */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {[
+                  ["citizenDashboard", "🏠 Dashboard (डैशबोर्ड)"],
+                  ["report", "📸 Report a Problem (समस्या दर्ज करें)"],
+                  ["noticeBoard", "📢 Notice Board (नोटिस बोर्ड)"],
+                  ["kisanPortal", "🌾 Kisan Kendra (किसान फसल डॉक्टर व मंडी)"],
+                  ["certificates", "📜 Certificates (डिजिटल प्रमाण पत्र)"],
+                  ["map", "🗺️ Village Map (गाँव का लाइव नक्शा)"],
+                  ["gramNidhi", "💰 Gram Nidhi (बजट व ऑडिट लेजर)"],
+                  ["gramSabha", "🗳️ Gram Sabha (जनमत व प्रस्ताव)"],
+                  ["rewards", "🏆 Rewards & Karma (नागरिक सम्मान)"]
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => navigateTo(key)}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      border: "none",
+                      background: page === key ? "rgba(31,77,54,0.12)" : "transparent",
+                      color: page === key ? "var(--paddy)" : "#132A1C",
+                      fontWeight: page === key ? 800 : 600,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <span>{label}</span>
+                    <ChevronRight size={13} color="var(--muted)" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Drawer Bottom Actions */}
+            <div style={{ borderTop: "1px solid var(--line-dark)", paddingTop: 14 }}>
+              {currentUser ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    onOpenLogoutModal();
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: "rgba(214,69,69,0.08)",
+                    color: "var(--crit)",
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8
+                  }}
+                >
+                  <LogOut size={14} /> Log Out / साइन आउट
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    onOpenAuthModal();
+                  }}
+                  className="ge-btn ge-btn-primary"
+                  style={{ width: "100%", padding: "11px", fontSize: 13 }}
+                >
+                  <User size={14} /> Sign In (लॉगिन करें)
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
 function MobileBottomNav({ page, setPage, role }) {
-  const items = role === "citizen"
-    ? [["citizenDashboard", Home, "Home"], ["map", MapIcon, "Map"], ["report", Sparkles, "Report"], ["citizenDashboard", FileText, "Reports"], ["rewards", User, "Profile"]]
-    : null;
-  if (!items) return null;
+  const items = [
+    ["citizenDashboard", Home, "Home"],
+    ["noticeBoard", Bell, "Notices"],
+    ["report", Camera, "Report"],
+    ["kisanPortal", Sprout, "Kisan"],
+    ["rewards", User, "Profile"]
+  ];
+
   return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FBF8F0", borderTop: "1px solid rgba(14,26,19,0.08)", display: "flex", zIndex: 50 }} className="ge-mobile-nav">
-      {items.map(([key, Icon, label], i) => (
-        <button key={i} onClick={() => setPage(key)} style={{
-          flex: 1, border: "none", background: "none", padding: "10px 0 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-          color: page === key ? "var(--paddy)" : "#93a091", cursor: "pointer",
-          transform: label === "Report" ? "translateY(-10px)" : "none"
-        }}>
-          {label === "Report"
-            ? <div style={{ width: 44, height: 44, borderRadius: 99, background: "var(--turmeric)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 18px -6px rgba(232,163,61,0.7)" }}><Icon size={20} color="#231402" /></div>
-            : <Icon size={19} />}
-          <span style={{ fontSize: 10, fontWeight: 700 }}>{label}</span>
-        </button>
-      ))}
+    <div
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: "rgba(251, 248, 240, 0.96)",
+        backdropFilter: "blur(12px)",
+        borderTop: "1px solid rgba(14,26,19,0.12)",
+        display: "flex",
+        zIndex: 50
+      }}
+      className="ge-mobile-nav"
+    >
+      {items.map(([key, Icon, label], i) => {
+        const isActive = page === key;
+        const isCenter = label === "Report";
+
+        return (
+          <button
+            key={i}
+            onClick={() => setPage(key)}
+            style={{
+              flex: 1,
+              border: "none",
+              background: "none",
+              padding: "8px 0 6px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              color: isActive ? "var(--paddy)" : "#829487",
+              cursor: "pointer",
+              transform: isCenter ? "translateY(-8px)" : "none"
+            }}
+          >
+            {isCenter ? (
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 99,
+                  background: "var(--turmeric)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 8px 18px rgba(232,163,61,0.6)"
+                }}
+              >
+                <Icon size={20} color="#231402" />
+              </div>
+            ) : (
+              <Icon size={18} />
+            )}
+            <span style={{ fontSize: 10, fontWeight: isActive ? 800 : 600 }}>{label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -474,20 +1114,20 @@ function Landing({ setPage, lang, complaints }) {
   return (
     <div style={{ background: "var(--ink)", color: "#FBF8F0" }}>
       {/* HERO */}
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "56px 24px 40px", display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 48, alignItems: "center" }} className="ge-hero-grid">
+      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "48px 20px 36px", display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 36, alignItems: "center" }} className="ge-hero-grid">
         <div className="ge-fadeup">
-          <div className="ge-chip" style={{ background: "rgba(232,163,61,0.14)", color: "var(--turmeric-light)", marginBottom: 20 }}>
+          <div className="ge-chip" style={{ background: "rgba(232,163,61,0.14)", color: "var(--turmeric-light)", marginBottom: 16 }}>
             <Sparkles size={13} /> AI-Powered Village Governance
           </div>
-          <h1 className="ge-serif" style={{ fontSize: "clamp(38px,5vw,60px)", lineHeight: 1.05, fontWeight: 600, margin: "0 0 20px" }}>
+          <h1 className="ge-serif" style={{ fontSize: "clamp(26px, 5.5vw, 56px)", lineHeight: 1.12, fontWeight: 600, margin: "0 0 16px", wordBreak: "break-word", overflowWrap: "break-word" }}>
             {t.tagline.split(". ").map((line, i) => <div key={i}>{line}{i < t.tagline.split(". ").length - 1 ? "." : ""}</div>)}
           </h1>
-          <p style={{ fontSize: 17, lineHeight: 1.6, color: "rgba(251,248,240,0.72)", maxWidth: 480, marginBottom: 30 }}>{t.sub}</p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button className="ge-btn ge-btn-primary" onClick={() => setPage("report")} style={{ padding: "15px 26px", fontSize: 15 }}>
+          <p style={{ fontSize: 15.5, lineHeight: 1.55, color: "rgba(251,248,240,0.72)", maxWidth: 480, marginBottom: 24 }}>{t.sub}</p>
+          <div className="ge-hero-cta" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <button className="ge-btn ge-btn-primary" onClick={() => setPage("report")} style={{ padding: "14px 22px", fontSize: 14.5 }}>
               {t.reportProblem} <ArrowRight size={16} />
             </button>
-            <button className="ge-btn ge-btn-outline" onClick={() => setPage("map")} style={{ padding: "15px 26px", fontSize: 15 }}>
+            <button className="ge-btn ge-btn-outline" onClick={() => setPage("map")} style={{ padding: "14px 22px", fontSize: 14.5 }}>
               {t.exploreVillage}
             </button>
           </div>
@@ -787,7 +1427,124 @@ function EmptyState({ text }) {
 }
 
 /* ============================================================
-   REPORT FLOW
+   PRESET SCENARIOS & SAMPLE PHOTOS (SVG DATA URLS)
+   ============================================================ */
+const PRESET_ROAD = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="roadBg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#242826"/><stop offset="100%" stop-color="#121614"/></linearGradient>
+    <linearGradient id="mud" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#543d25"/><stop offset="100%" stop-color="#25170c"/></linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#roadBg)"/>
+  <path d="M 0 160 L 800 150 L 800 450 L 0 450 Z" fill="#1b1f1d"/>
+  <line x1="0" y1="290" x2="800" y2="290" stroke="#E8A33D" stroke-dasharray="40 30" stroke-width="7" opacity="0.65"/>
+  <ellipse cx="420" cy="300" rx="140" ry="70" fill="url(#mud)"/>
+  <ellipse cx="420" cy="300" rx="120" ry="55" fill="#140c06"/>
+  <path d="M 330 280 Q 380 340 460 330 Q 530 300 490 260 Q 420 250 330 280 Z" fill="#0b0704"/>
+  <path d="M 310 270 L 240 240 M 520 320 L 610 350 M 460 360 L 480 410" stroke="#0e1411" stroke-width="3.5"/>
+  <rect x="260" y="210" width="340" height="170" fill="none" stroke="#E0703A" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <rect x="260" y="184" width="240" height="26" rx="4" fill="#E0703A"/>
+  <text x="270" y="202" fill="#ffffff" font-family="sans-serif" font-size="12" font-weight="bold">AI VISION: ROAD DAMAGE (POTHOLE)</text>
+</svg>
+`)}`;
+
+const PRESET_WATER = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="soil" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#423022"/><stop offset="100%" stop-color="#22170e"/></linearGradient>
+    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#3C87A6"/><stop offset="100%" stop-color="#19485C"/></linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#soil)"/>
+  <ellipse cx="410" cy="320" rx="260" ry="85" fill="url(#waterGrad)" opacity="0.9"/>
+  <ellipse cx="410" cy="320" rx="200" ry="60" fill="#5fb5db" opacity="0.45"/>
+  <rect x="180" y="220" width="340" height="42" rx="6" fill="#6d7570"/>
+  <rect x="230" y="210" width="22" height="62" rx="4" fill="#444b47"/>
+  <circle cx="430" cy="240" r="14" fill="#1b1e1d"/>
+  <path d="M 430 240 Q 480 130 540 230" stroke="#b2e5fa" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M 430 240 Q 410 120 460 250" stroke="#ffffff" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <rect x="330" y="120" width="270" height="230" fill="none" stroke="#3C87A6" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <rect x="330" y="94" width="240" height="26" rx="4" fill="#3C87A6"/>
+  <text x="340" y="112" fill="#ffffff" font-family="sans-serif" font-size="12" font-weight="bold">AI VISION: MAIN WATER PIPELINE LEAK</text>
+</svg>
+`)}`;
+
+const PRESET_WIRE = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="darkBg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1c1614"/><stop offset="100%" stop-color="#0f0d0c"/></linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#darkBg)"/>
+  <rect x="200" y="50" width="32" height="400" fill="#4d4540"/>
+  <rect x="140" y="90" width="160" height="18" fill="#35302c"/>
+  <rect x="150" y="110" width="90" height="110" fill="#202020" rx="4"/>
+  <path d="M 170 220 Q 280 370 400 380 Q 460 385 530 360" stroke="#0a0a0a" stroke-width="6" fill="none"/>
+  <circle cx="400" cy="380" r="18" fill="#ffdd44" opacity="0.95"/>
+  <circle cx="400" cy="380" r="36" fill="#ff4411" opacity="0.3"/>
+  <path d="M 390 360 L 410 400 M 380 390 L 420 370" stroke="#ffffff" stroke-width="3.5"/>
+  <rect x="290" y="290" width="240" height="130" fill="none" stroke="#D64545" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <rect x="290" y="264" width="250" height="26" rx="4" fill="#D64545"/>
+  <text x="300" y="282" fill="#ffffff" font-family="sans-serif" font-size="12" font-weight="bold">AI VISION: EXPOSED LIVE WIRE (440V)</text>
+</svg>
+`)}`;
+
+const PRESET_LIGHT = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="nightSky" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#081016"/><stop offset="100%" stop-color="#121d26"/></linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#nightSky)"/>
+  <rect x="0" y="380" width="800" height="70" fill="#0b130e"/>
+  <path d="M 320 400 L 330 180 Q 335 120 400 100 L 460 90" stroke="#717a74" stroke-width="16" fill="none" stroke-linecap="round"/>
+  <path d="M 460 90 L 470 140" stroke="#111" stroke-width="4"/>
+  <rect x="440" y="140" width="50" height="22" rx="4" fill="#2d302e" transform="rotate(35 465 151)"/>
+  <circle cx="490" cy="165" r="7" fill="#443212"/>
+  <rect x="280" y="60" width="260" height="210" fill="none" stroke="#E8A33D" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <rect x="280" y="34" width="240" height="26" rx="4" fill="#E8A33D"/>
+  <text x="290" y="52" fill="#231402" font-family="sans-serif" font-size="12" font-weight="bold">AI VISION: BROKEN STREETLIGHT POLE</text>
+</svg>
+`)}`;
+
+const PRESET_SCENARIOS = [
+  {
+    id: "p1",
+    label: "🛣️ Pothole Road",
+    sub: "Ward 4 • School Rd",
+    category: "Road Damage",
+    ward: "Ward 4",
+    description: "Deep pothole outside primary school gate. Water stagnating after rain, risky for students and cyclists.",
+    image: PRESET_ROAD
+  },
+  {
+    id: "p2",
+    label: "💧 Pipe Burst",
+    sub: "Ward 2 • Tank Area",
+    category: "Water Leakage",
+    ward: "Ward 2",
+    description: "Main drinking water pipe burst near community tank. Clean water flowing onto road continuously.",
+    image: PRESET_WATER
+  },
+  {
+    id: "p3",
+    label: "⚡ Live Wire",
+    sub: "Ward 5 • Farmland",
+    category: "Electrical Hazard",
+    ward: "Ward 5",
+    description: "High voltage wire snapped and hanging low near cattle walking path. Dangerous sparks visible.",
+    image: PRESET_WIRE
+  },
+  {
+    id: "p4",
+    label: "💡 Streetlight Out",
+    sub: "Ward 1 • Entrance",
+    category: "Broken Streetlight",
+    ward: "Ward 1",
+    description: "Main entrance pole light broken, total pitch darkness at night causing safety and mobility hazard.",
+    image: PRESET_LIGHT
+  }
+];
+
+/* ============================================================
+   UPGRADED REPORT FLOW COMPONENT
    ============================================================ */
 function ReportFlow({ complaints, addComplaint, setPage, setSelectedComplaint, addXp, lang }) {
   const [step, setStep] = useState(0);
@@ -795,52 +1552,336 @@ function ReportFlow({ complaints, addComplaint, setPage, setSelectedComplaint, a
   const [category, setCategory] = useState(null);
   const [description, setDescription] = useState("");
   const [ward, setWard] = useState(null);
+
+  // Photographic Evidence State
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageName, setImageName] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [isScanningImage, setIsScanningImage] = useState(false);
+  const [detectedAiBadge, setDetectedAiBadge] = useState("");
+
+  // Speech Recognition State
+  const [isListening, setIsListening] = useState(false);
+  const [speechLang, setSpeechLang] = useState("hi-IN");
+  const [speechStatus, setSpeechStatus] = useState("");
+  const [isSimulatingVoice, setIsSimulatingVoice] = useState(false);
+
+  // GPS Geolocation State
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsInfo, setGpsInfo] = useState(null);
+  const [gpsVerified, setGpsVerified] = useState(false);
+
+  // AI Analysis State
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisPhase, setAnalysisPhase] = useState(1);
   const [analysis, setAnalysis] = useState(null);
   const [dupChoice, setDupChoice] = useState(null);
   const [submitted, setSubmitted] = useState(null);
+
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const recognitionRef = useRef(null);
   const t = T[lang];
 
   const duplicates = ward && category ? findDuplicates(complaints, { category, ward }) : [];
 
+  // File Upload Handling
+  const handleFileSelect = (file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+      setImageName(file.name);
+      runMiniScan(file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const runMiniScan = (nameHint = "") => {
+    setIsScanningImage(true);
+    setTimeout(() => {
+      setIsScanningImage(false);
+      const lower = (nameHint + " " + description).toLowerCase();
+      let autoCat = category;
+      if (!autoCat) {
+        if (lower.includes("road") || lower.includes("pothole") || lower.includes("सड़क")) autoCat = "Road Damage";
+        else if (lower.includes("water") || lower.includes("pipe") || lower.includes("पानी")) autoCat = "Water Leakage";
+        else if (lower.includes("wire") || lower.includes("electric") || lower.includes("बिजली")) autoCat = "Electrical Hazard";
+        else if (lower.includes("light") || lower.includes("pole") || lower.includes("बत्ती")) autoCat = "Broken Streetlight";
+        else autoCat = "Road Damage";
+        setCategory(autoCat);
+      }
+      setDetectedAiBadge(`⚡ AI Vision: ${autoCat || "Problem"} Detected • 96% Match`);
+    }, 1100);
+  };
+
+  // Quick Preset Selector
+  const selectPreset = (preset) => {
+    setImagePreview(preset.image);
+    setImageName(preset.label);
+    setCategory(preset.category);
+    setDescription(preset.description);
+    if (!ward) setWard(preset.ward);
+    setDetectedAiBadge(`⚡ AI Vision: ${preset.category} Detected • 98% Match`);
+    setIsScanningImage(true);
+    setTimeout(() => setIsScanningImage(false), 800);
+  };
+
+  // Voice Speech Recognition
+  const toggleSpeechRecognition = () => {
+    if (isListening) {
+      if (recognitionRef.current) recognitionRef.current.stop();
+      setIsListening(false);
+      setSpeechStatus("Stopped");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      handleSimulateVoice();
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.lang = speechLang;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setSpeechStatus(speechLang === "hi-IN" ? "माइक चालू है — बोलिए..." : "Listening — speak clearly...");
+      };
+
+      recognition.onresult = (event) => {
+        let interim = "";
+        let final = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) final += event.results[i][0].transcript;
+          else interim += event.results[i][0].transcript;
+        }
+        const textSpoken = (final || interim).trim();
+        if (textSpoken) {
+          setDescription((prev) => (prev ? prev + " " + textSpoken : textSpoken));
+          autoDetectCategoryFromText(textSpoken);
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        setSpeechStatus("Microphone error. Falling back to simulator.");
+        handleSimulateVoice();
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch {
+      handleSimulateVoice();
+    }
+  };
+
+  // Simulated Voice Input (Demo / Fallback)
+  const handleSimulateVoice = () => {
+    setIsSimulatingVoice(true);
+    setSpeechStatus("🎙️ Simulating voice input...");
+    const sampleHindi = "वार्ड 3 में मुख्य सड़क पर बड़ा गड्ढा हो गया है और बारिश का गंदा पानी भर गया है, तुरंत ठीक करवाएं।";
+    let index = 0;
+    setDescription("");
+    const interval = setInterval(() => {
+      index += 4;
+      setDescription(sampleHindi.slice(0, index));
+      if (index >= sampleHindi.length) {
+        clearInterval(interval);
+        setIsSimulatingVoice(false);
+        setSpeechStatus("✓ Voice transcription complete!");
+        autoDetectCategoryFromText(sampleHindi);
+      }
+    }, 45);
+  };
+
+  const autoDetectCategoryFromText = (text) => {
+    const lower = text.toLowerCase();
+    if (lower.includes("सड़क") || lower.includes("गड्ढा") || lower.includes("road") || lower.includes("pothole")) {
+      setCategory("Road Damage");
+    } else if (lower.includes("पानी") || lower.includes("नल") || lower.includes("leak") || lower.includes("pipe") || lower.includes("water")) {
+      setCategory("Water Leakage");
+    } else if (lower.includes("बिजली") || lower.includes("तार") || lower.includes("wire") || lower.includes("current") || lower.includes("spark")) {
+      setCategory("Electrical Hazard");
+    } else if (lower.includes("लाइट") || lower.includes("बत्ती") || lower.includes("pole") || lower.includes("streetlight") || lower.includes("dark")) {
+      setCategory("Broken Streetlight");
+    } else if (lower.includes("कचरा") || lower.includes("नाली") || lower.includes("drain") || lower.includes("garbage")) {
+      setCategory("Garbage & Drainage");
+    }
+  };
+
+  // GPS Auto-Detection
+  const handleDetectGPS = () => {
+    setGpsLoading(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(4);
+          const lng = pos.coords.longitude.toFixed(4);
+          const acc = Math.round(pos.coords.accuracy || 8);
+          setGpsInfo(`${lat}° N, ${lng}° E (±${acc}m)`);
+          setGpsVerified(true);
+          setGpsLoading(false);
+          if (!ward) setWard("Ward 3");
+        },
+        () => {
+          // Accurate Kurud/Kodebod simulated fallback
+          setTimeout(() => {
+            setGpsInfo("20.6542° N, 81.6912° E (±5m · Kurud)");
+            setGpsVerified(true);
+            setGpsLoading(false);
+            if (!ward) setWard("Ward 3");
+          }, 800);
+        },
+        { timeout: 5000 }
+      );
+    } else {
+      setTimeout(() => {
+        setGpsInfo("20.6542° N, 81.6912° E (±5m · Kurud)");
+        setGpsVerified(true);
+        setGpsLoading(false);
+        if (!ward) setWard("Ward 3");
+      }, 600);
+    }
+  };
+
+  // AI Analysis Execution with multi-stage ticker
   function runAnalysis() {
     setAnalyzing(true);
     setAnalysis(null);
-    setTimeout(() => {
+    setAnalysisPhase(1);
+
+    const t1 = setTimeout(() => setAnalysisPhase(2), 600);
+    const t2 = setTimeout(() => setAnalysisPhase(3), 1300);
+    const t3 = setTimeout(() => setAnalysisPhase(4), 1900);
+    const t4 = setTimeout(() => {
       const result = mockAnalyze({ category, description });
       setAnalysis(result);
       setAnalyzing(false);
-    }, 2200);
+    }, 2500);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
   }
 
-  useEffect(() => { if (step === 2 && !analysis && !analyzing) runAnalysis(); }, [step]); // eslint-disable-line
+  useEffect(() => {
+    if (step === 2 && !analysis && !analyzing) {
+      runAnalysis();
+    }
+  }, [step]); // eslint-disable-line
 
   function submit() {
     const id = `GRM-${1030 + complaints.length}`;
     const record = {
-      id, title: description ? description.slice(0, 60) : `${category} reported`,
-      category, ward, severity: analysis.severity, status: "PENDING", progress: 0,
-      dept: analysis.suggestedDepartment, reporter: "You", createdAt: "2026-08-26",
-      confidence: analysis.confidence, votes: 1,
+      id,
+      title: description ? description.slice(0, 60) : `${category} reported`,
+      category,
+      ward,
+      severity: analysis ? analysis.severity : "MEDIUM",
+      status: "PENDING",
+      progress: 0,
+      dept: analysis ? analysis.suggestedDepartment : catOf(category).dept,
+      reporter: "You",
+      createdAt: "2026-09-03",
+      confidence: analysis ? analysis.confidence : 0.94,
+      votes: 1,
+      image: imagePreview || null,
+      gps: gpsInfo || null,
+      method
     };
     addComplaint(record);
     addXp(20);
     setSubmitted(record);
   }
 
+  // Submission Success Card with Animations
   if (submitted) {
     return (
-      <div style={{ maxWidth: 560, margin: "60px auto", padding: "0 24px", textAlign: "center" }}>
-        <div className="ge-card ge-fadeup" style={{ padding: 40 }}>
-          <div style={{ width: 74, height: 74, borderRadius: 99, background: "var(--low)" + "22", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-            <CheckCircle2 size={38} color="var(--low)" />
+      <div style={{ maxWidth: 580, margin: "50px auto", padding: "0 20px", textAlign: "center" }}>
+        <div className="ge-card" style={{ padding: "40px 24px", animation: "geSuccessPop 0.5s ease-out" }}>
+          <div
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 99,
+              background: "rgba(95, 168, 114, 0.18)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 20px",
+              boxShadow: "0 0 24px rgba(95, 168, 114, 0.4)"
+            }}
+          >
+            <CheckCircle2 size={44} color="var(--low)" />
           </div>
-          <div className="ge-serif" style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Complaint Successfully Submitted</div>
-          <div className="ge-mono" style={{ fontSize: 15, color: "var(--paddy)", fontWeight: 700, marginBottom: 20 }}>{submitted.id}</div>
-          <div className="ge-chip" style={{ background: "rgba(232,163,61,0.14)", color: "#B97417", marginBottom: 24 }}>+20 XP earned</div>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-            <button className="ge-btn ge-btn-ghost" onClick={() => { setSelectedComplaint(submitted); setPage("complaintDetail"); }}>Track this report</button>
-            <button className="ge-btn ge-btn-primary" onClick={() => setPage("citizenDashboard")}>Go to Dashboard</button>
+
+          <div className="ge-serif" style={{ fontSize: 26, fontWeight: 700, marginBottom: 8, color: "var(--ink)" }}>
+            Grievance Registered Successfully!
+          </div>
+
+          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 16 }}>
+            Your report has been analyzed by GramEye AI and routed to the <b>{submitted.dept}</b>.
+          </p>
+
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 12,
+              background: "rgba(31,77,54,0.06)",
+              padding: "8px 20px",
+              borderRadius: 12,
+              marginBottom: 20
+            }}
+          >
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>Tracking ID:</span>
+            <span className="ge-mono" style={{ fontSize: 16, color: "var(--paddy)", fontWeight: 800 }}>
+              {submitted.id}
+            </span>
+          </div>
+
+          {submitted.image && (
+            <div style={{ maxWidth: 280, margin: "0 auto 20px", borderRadius: 10, overflow: "hidden", border: "1px solid var(--line-dark)" }}>
+              <img src={submitted.image} alt="Report preview" style={{ width: "100%", height: 130, objectFit: "cover", display: "block" }} />
+            </div>
+          )}
+
+          <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 28 }}>
+            <div className="ge-chip" style={{ background: "rgba(232,163,61,0.18)", color: "#B97417", fontSize: 13, gap: 6 }}>
+              <Flame size={15} /> +20 XP Earned
+            </div>
+            {submitted.gps && (
+              <div className="ge-chip" style={{ background: "rgba(60,135,166,0.14)", color: "var(--tank)", fontSize: 12, gap: 5 }}>
+                <MapPin size={13} /> GPS Logged
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              className="ge-btn ge-btn-ghost"
+              onClick={() => {
+                setSelectedComplaint(submitted);
+                setPage("complaintDetail");
+              }}
+            >
+              Track This Report
+            </button>
+            <button className="ge-btn ge-btn-primary" onClick={() => setPage("citizenDashboard")}>
+              Go to Dashboard <ArrowRight size={15} />
+            </button>
           </div>
         </div>
       </div>
@@ -850,177 +1891,766 @@ function ReportFlow({ complaints, addComplaint, setPage, setSelectedComplaint, a
   const steps = ["Describe", "Location", "AI Analysis", "Confirm"];
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "36px 24px 90px" }}>
-      <div style={{ display: "flex", gap: 8, marginBottom: 30 }}>
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "36px 20px 90px" }}>
+      {/* Step Progress Bar */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 28 }}>
         {steps.map((s, i) => (
           <div key={i} style={{ flex: 1 }}>
-            <div style={{ height: 4, borderRadius: 4, background: i <= step ? "var(--turmeric)" : "var(--line-dark)", transition: "background .3s" }} />
-            <div style={{ fontSize: 11, marginTop: 6, color: i <= step ? "var(--ink-text)" : "var(--muted)", fontWeight: i === step ? 700 : 400 }}>{s}</div>
+            <div
+              style={{
+                height: 4,
+                borderRadius: 4,
+                background: i <= step ? "var(--turmeric)" : "var(--line-dark)",
+                transition: "background .3s"
+              }}
+            />
+            <div
+              style={{
+                fontSize: 11.5,
+                marginTop: 6,
+                color: i <= step ? "var(--ink-text)" : "var(--muted)",
+                fontWeight: i === step ? 800 : 400
+              }}
+            >
+              {s}
+            </div>
           </div>
         ))}
       </div>
 
+      {/* STEP 0: DESCRIBE */}
       {step === 0 && (
         <div className="ge-fadeup">
-          <h2 className="ge-serif" style={{ fontSize: 24, marginBottom: 4 }}>What's the problem?</h2>
-          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 20 }}>Choose how you'd like to report, pick a category, and add a short description.</p>
+          <h2 className="ge-serif" style={{ fontSize: 25, fontWeight: 700, marginBottom: 6 }}>
+            What's the problem?
+          </h2>
+          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 22 }}>
+            Choose how you'd like to report, pick a category, and upload photographic or voice evidence.
+          </p>
 
-          <div style={{ display: "flex", gap: 10, marginBottom: 22 }}>
-            {[["photo", Camera, t.step_photo.replace("📷 ", "")], ["voice", Mic, t.step_voice.replace("🎙️ ", "")], ["text", FileText, "Describe in text"]].map(([key, Icon, label]) => (
-              <button key={key} onClick={() => setMethod(key)} className="ge-btn" style={{
-                flex: 1, flexDirection: "column", padding: "18px 10px", gap: 8,
-                background: method === key ? "rgba(31,77,54,0.08)" : "var(--husk-2)", border: `1.5px solid ${method === key ? "var(--paddy)" : "var(--line-dark)"}`
-              }}>
-                <Icon size={20} color={method === key ? "var(--paddy)" : "var(--muted)"} />
-                <span style={{ fontSize: 11.5, fontWeight: 700, textAlign: "center" }}>{label}</span>
+          {/* Method Tabs */}
+          <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+            {[
+              ["photo", Camera, "Take a photo of problem"],
+              ["voice", Mic, "Speak your problem"],
+              ["text", FileText, "Describe in text"]
+            ].map(([key, Icon, label]) => (
+              <button
+                key={key}
+                onClick={() => setMethod(key)}
+                className="ge-btn"
+                style={{
+                  flex: 1,
+                  flexDirection: "column",
+                  padding: "16px 8px",
+                  gap: 8,
+                  background: method === key ? "rgba(31,77,54,0.08)" : "var(--husk-2)",
+                  border: `1.5px solid ${method === key ? "var(--paddy)" : "var(--line-dark)"}`,
+                  boxShadow: method === key ? "0 4px 14px rgba(31,77,54,0.12)" : "none"
+                }}
+              >
+                <Icon size={22} color={method === key ? "var(--paddy)" : "var(--muted)"} />
+                <span style={{ fontSize: 12, fontWeight: 700, textAlign: "center", lineHeight: 1.25 }}>{label}</span>
               </button>
             ))}
           </div>
 
+          {/* 1. PHOTO METHOD: REAL UPLOAD & CAMERA */}
           {method === "photo" && (
-            <div style={{ border: "2px dashed var(--line-dark)", borderRadius: 16, padding: "30px 20px", textAlign: "center", marginBottom: 20, background: "rgba(31,77,54,0.03)" }}>
-              <Upload size={26} color="var(--muted)" style={{ marginBottom: 8 }} />
-              <div style={{ fontSize: 13, color: "var(--muted)" }}>Tap to upload or take a photo</div>
-              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>(demo mode — AI will analyze a simulated image)</div>
-            </div>
-          )}
-          {method === "voice" && (
-            <div style={{ textAlign: "center", padding: "24px 20px", marginBottom: 20 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 99, background: "var(--crit)" + "18", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
-                <Mic size={26} color="var(--crit)" />
+            <div style={{ marginBottom: 24 }}>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => handleFileSelect(e.target.files[0])}
+              />
+              <input
+                type="file"
+                ref={cameraInputRef}
+                accept="image/*"
+                capture="environment"
+                style={{ display: "none" }}
+                onChange={(e) => handleFileSelect(e.target.files[0])}
+              />
+
+              {!imagePreview ? (
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    if (e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]);
+                  }}
+                  style={{
+                    border: `2px dashed ${isDragging ? "var(--paddy)" : "var(--line-dark)"}`,
+                    borderRadius: 16,
+                    padding: "26px 16px",
+                    textAlign: "center",
+                    background: isDragging ? "rgba(31,77,54,0.07)" : "rgba(31,77,54,0.03)",
+                    transition: "all .2s"
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 54,
+                      height: 54,
+                      borderRadius: 99,
+                      background: "rgba(232,163,61,0.16)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: "0 auto 12px"
+                    }}
+                  >
+                    <Upload size={24} color="var(--turmeric)" />
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>
+                    Upload or Capture Photo of the Problem
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16 }}>
+                    Drag and drop an image here, or choose from device
+                  </div>
+
+                  <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      className="ge-btn ge-btn-primary"
+                      style={{ padding: "10px 18px", fontSize: 13 }}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImageIcon size={15} /> Choose Photo
+                    </button>
+                    <button
+                      type="button"
+                      className="ge-btn ge-btn-dark"
+                      style={{ padding: "10px 18px", fontSize: 13 }}
+                      onClick={() => cameraInputRef.current?.click()}
+                    >
+                      <Camera size={15} /> Use Camera
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* LIVE IMAGE PREVIEW WITH SCANNER */
+                <div
+                  style={{
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    border: "1.5px solid var(--paddy)",
+                    position: "relative",
+                    background: "#0B1710",
+                    boxShadow: "0 14px 34px -10px rgba(11,23,16,0.35)"
+                  }}
+                >
+                  <div style={{ position: "relative", height: 220, overflow: "hidden" }}>
+                    <img
+                      src={imagePreview}
+                      alt="Uploaded defect"
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+
+                    {/* Animated Scanning Line */}
+                    {isScanningImage && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          height: 3,
+                          background: "var(--turmeric)",
+                          boxShadow: "0 0 16px 4px rgba(232,163,61,0.9)",
+                          animation: "geLaserScan 1.2s ease-in-out infinite alternate"
+                        }}
+                      />
+                    )}
+
+                    {/* AI Bounding Box Tag */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 12,
+                        left: 12,
+                        background: "rgba(11,23,16,0.85)",
+                        backdropFilter: "blur(6px)",
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        color: "#FBF8F0",
+                        fontSize: 11.5,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6
+                      }}
+                    >
+                      <Sparkles size={13} color="var(--turmeric)" />
+                      <span>{detectedAiBadge || "AI Optical Vision Active"}</span>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setImagePreview(null);
+                        setImageName("");
+                        setDetectedAiBadge("");
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: 10,
+                        right: 10,
+                        background: "rgba(0,0,0,0.6)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 99,
+                        width: 30,
+                        height: 30,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer"
+                      }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      background: "rgba(31,77,54,0.06)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                  >
+                    <span style={{ fontSize: 12, color: "var(--muted)" }}>Photo Loaded: {imageName || "Device Photo"}</span>
+                    <button
+                      className="ge-btn ge-btn-ghost"
+                      style={{ padding: "4px 10px", fontSize: 12 }}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <RefreshCw size={12} /> Retake
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* One-Click Real Presets */}
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted)", marginBottom: 8 }}>
+                  Or test with 1-click realistic village problem samples:
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }} className="ge-4col">
+                  {PRESET_SCENARIOS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => selectPreset(p)}
+                      className="ge-btn"
+                      style={{
+                        flexDirection: "column",
+                        padding: "8px 6px",
+                        gap: 3,
+                        background: category === p.category && imagePreview === p.image ? "rgba(232,163,61,0.18)" : "var(--husk-2)",
+                        border: `1px solid ${category === p.category && imagePreview === p.image ? "var(--turmeric)" : "var(--line-dark)"}`
+                      }}
+                    >
+                      <span style={{ fontSize: 11.5, fontWeight: 700 }}>{p.label}</span>
+                      <span style={{ fontSize: 9.5, color: "var(--muted)" }}>{p.sub}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Tap and speak — e.g. "मेरे गाँव में तीन दिन से पानी नहीं आ रहा है"</div>
             </div>
           )}
 
+          {/* 2. VOICE METHOD: REAL RECOGNITION + SOUND WAVES */}
+          {method === "voice" && (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "24px 18px",
+                marginBottom: 20,
+                background: "rgba(31,77,54,0.04)",
+                borderRadius: 16,
+                border: "1px solid var(--line-dark)"
+              }}
+            >
+              {/* Language Switch */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 16 }}>
+                <button
+                  type="button"
+                  onClick={() => setSpeechLang("hi-IN")}
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: 99,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    border: speechLang === "hi-IN" ? "1.5px solid var(--paddy)" : "1px solid var(--line-dark)",
+                    background: speechLang === "hi-IN" ? "var(--paddy)" : "transparent",
+                    color: speechLang === "hi-IN" ? "#fff" : "var(--ink-text)"
+                  }}
+                >
+                  हिन्दी (Hindi)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSpeechLang("en-IN")}
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: 99,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    border: speechLang === "en-IN" ? "1.5px solid var(--paddy)" : "1px solid var(--line-dark)",
+                    background: speechLang === "en-IN" ? "var(--paddy)" : "transparent",
+                    color: speechLang === "en-IN" ? "#fff" : "var(--ink-text)"
+                  }}
+                >
+                  English (India)
+                </button>
+              </div>
+
+              {/* Pulsing Mic Button */}
+              <button
+                type="button"
+                onClick={toggleSpeechRecognition}
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 99,
+                  background: isListening ? "var(--crit)" : "var(--turmeric)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 14px",
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: isListening ? "0 0 20px rgba(214,69,69,0.7)" : "0 8px 20px -4px rgba(232,163,61,0.5)",
+                  animation: isListening ? "gePulseGlow 1.5s infinite" : "none",
+                  transition: "all .2s"
+                }}
+              >
+                <Mic size={32} color={isListening ? "#fff" : "#231402"} />
+              </button>
+
+              {/* Sound Waves Animation */}
+              {isListening && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, height: 32, marginBottom: 12 }}>
+                  {[12, 24, 18, 28, 14, 26, 32, 20, 15, 27, 18, 10].map((h, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: 3.5,
+                        height: h,
+                        background: "var(--paddy)",
+                        borderRadius: 2,
+                        animation: `geWave 0.8s ease-in-out infinite alternate ${i * 0.08}s`
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink-text)", marginBottom: 4 }}>
+                {isListening ? (speechLang === "hi-IN" ? "माइक चालू है — बोलिए..." : "Listening — speak clearly...") : "Tap microphone to speak"}
+              </div>
+
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 14 }}>
+                {speechStatus || 'e.g. "वार्ड 3 में सड़क पर बड़ा गड्ढा है और पानी भर गया है"'}
+              </div>
+
+              <button
+                type="button"
+                className="ge-btn ge-btn-ghost"
+                style={{ fontSize: 12, padding: "6px 14px" }}
+                onClick={handleSimulateVoice}
+                disabled={isSimulatingVoice}
+              >
+                <Volume2 size={13} /> {isSimulatingVoice ? "Transcribing..." : "Simulate Hindi Voice Demo"}
+              </button>
+            </div>
+          )}
+
+          {/* 3. CATEGORY SELECTION */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 8, display: "block" }}>Category</label>
+            <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
+              <span>Category {category && <span style={{ color: "var(--paddy)", fontWeight: 800 }}>• {category}</span>}</span>
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>AI auto-classifies on photo/voice</span>
+            </label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }} className="ge-3col">
-              {CATEGORIES.map(c => (
-                <button key={c.key} onClick={() => setCategory(c.key)} className="ge-btn" style={{
-                  flexDirection: "column", padding: "12px 6px", gap: 6,
-                  background: category === c.key ? c.color + "1a" : "var(--husk-2)", border: `1.5px solid ${category === c.key ? c.color : "var(--line-dark)"}`
-                }}>
-                  <c.icon size={17} color={c.color} />
-                  <span style={{ fontSize: 10.5, fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>{c.key}</span>
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => setCategory(c.key)}
+                  className="ge-btn"
+                  style={{
+                    flexDirection: "column",
+                    padding: "12px 6px",
+                    gap: 6,
+                    background: category === c.key ? c.color + "1a" : "var(--husk-2)",
+                    border: `1.5px solid ${category === c.key ? c.color : "var(--line-dark)"}`,
+                    transform: category === c.key ? "scale(1.02)" : "none"
+                  }}
+                >
+                  <c.icon size={18} color={c.color} />
+                  <span style={{ fontSize: 11, fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>{c.key}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div style={{ marginBottom: 26 }}>
-            <label style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 8, display: "block" }}>Description</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
-              placeholder="Briefly describe the problem…"
-              style={{ width: "100%", borderRadius: 12, border: "1.5px solid var(--line-dark)", padding: 12, fontSize: 13.5, fontFamily: "inherit", resize: "vertical" }} />
+          {/* 4. DESCRIPTION TEXTAREA */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "block" }}>
+              Description & Details
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Describe the issue, landmarks, or how long it has been unresolved..."
+              style={{
+                width: "100%",
+                borderRadius: 12,
+                border: "1.5px solid var(--line-dark)",
+                padding: 12,
+                fontSize: 13.5,
+                fontFamily: "inherit",
+                resize: "vertical",
+                outline: "none"
+              }}
+            />
           </div>
 
-          <button className="ge-btn ge-btn-primary" disabled={!category} style={{ width: "100%" }} onClick={() => setStep(1)}>{t.step_next}</button>
+          <button
+            className="ge-btn ge-btn-primary"
+            disabled={!category}
+            style={{ width: "100%", padding: "14px" }}
+            onClick={() => setStep(1)}
+          >
+            {t.step_next}
+          </button>
         </div>
       )}
 
+      {/* STEP 1: LOCATION & REAL GPS AUTO-DETECT */}
       {step === 1 && (
         <div className="ge-fadeup">
-          <h2 className="ge-serif" style={{ fontSize: 24, marginBottom: 4 }}>{t.step_location}</h2>
-          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 20 }}>Select the ward where this problem is located.</p>
+          <h2 className="ge-serif" style={{ fontSize: 25, fontWeight: 700, marginBottom: 4 }}>
+            {t.step_location}
+          </h2>
+          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 18 }}>
+            Choose the ward or use live GPS to pin the exact geo-coordinates.
+          </p>
+
+          {/* GPS Auto-Detect Button */}
+          <div
+            style={{
+              background: "rgba(31,77,54,0.05)",
+              border: "1px solid var(--line-dark)",
+              borderRadius: 14,
+              padding: "12px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 18,
+              flexWrap: "wrap",
+              gap: 10
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 99,
+                  background: gpsVerified ? "rgba(95,168,114,0.2)" : "rgba(232,163,61,0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Navigation size={18} color={gpsVerified ? "var(--low)" : "var(--turmeric)"} />
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-text)" }}>
+                  {gpsVerified ? "Live GPS Coordinates Verified" : "Automatic GPS Geolocation"}
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                  {gpsInfo || "Capture real satellite GPS coordinates for Panchayat field crew"}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="ge-btn ge-btn-primary"
+              style={{ padding: "8px 16px", fontSize: 12.5 }}
+              onClick={handleDetectGPS}
+              disabled={gpsLoading}
+            >
+              {gpsLoading ? <Loader2 size={14} style={{ animation: "geSpin 1s linear infinite" }} /> : <MapPin size={14} />}
+              {gpsLoading ? "Acquiring GPS..." : gpsVerified ? "GPS Refreshed ✓" : "Detect My Location"}
+            </button>
+          </div>
+
           <div className="ge-card" style={{ padding: 14, marginBottom: 18 }}>
             <VillageMap complaints={complaints} onSelectWard={setWard} selectedWard={ward} height={260} />
           </div>
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 26 }} className="ge-3col">
-            {WARDS.map(w => (
-              <button key={w} onClick={() => setWard(w)} className="ge-btn" style={{
-                background: ward === w ? "var(--paddy)" : "var(--husk-2)", color: ward === w ? "#fff" : "var(--ink-text)", border: `1.5px solid ${ward === w ? "var(--paddy)" : "var(--line-dark)"}`
-              }}><MapPin size={13} /> {w}</button>
+            {WARDS.map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => setWard(w)}
+                className="ge-btn"
+                style={{
+                  background: ward === w ? "var(--paddy)" : "var(--husk-2)",
+                  color: ward === w ? "#fff" : "var(--ink-text)",
+                  border: `1.5px solid ${ward === w ? "var(--paddy)" : "var(--line-dark)"}`
+                }}
+              >
+                <MapPin size={13} /> {w}
+              </button>
             ))}
           </div>
+
           <div style={{ display: "flex", gap: 10 }}>
-            <button className="ge-btn ge-btn-ghost" onClick={() => setStep(0)}><ChevronLeft size={15} /> Back</button>
-            <button className="ge-btn ge-btn-primary" disabled={!ward} style={{ flex: 1 }} onClick={() => setStep(2)}>{t.step_next}</button>
+            <button className="ge-btn ge-btn-ghost" onClick={() => setStep(0)}>
+              <ChevronLeft size={15} /> Back
+            </button>
+            <button className="ge-btn ge-btn-primary" disabled={!ward} style={{ flex: 1 }} onClick={() => setStep(2)}>
+              {t.step_next}
+            </button>
           </div>
         </div>
       )}
 
+      {/* STEP 2: ADVANCED AI VISION & NLP ANALYSIS */}
       {step === 2 && (
         <div className="ge-fadeup">
-          <h2 className="ge-serif" style={{ fontSize: 24, marginBottom: 4 }}>AI Analysis</h2>
-          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 20 }}>Sit tight — GramEye AI is reading your report.</p>
+          <h2 className="ge-serif" style={{ fontSize: 25, fontWeight: 700, marginBottom: 4 }}>
+            AI Optical & Risk Analysis
+          </h2>
+          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 20 }}>
+            GramEye AI neural vision engine is assessing hazard depth, safety risk, and Panchayat SLA.
+          </p>
 
           <div className="ge-card" style={{ padding: 20, marginBottom: 20, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "relative", height: 120, borderRadius: 12, background: "linear-gradient(135deg,var(--paddy),var(--ink))", marginBottom: 16, overflow: "hidden" }}>
-              <CategoryIcon category={category} box={0} size={40} />
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {React.createElement(catOf(category).icon, { size: 42, color: "rgba(255,255,255,0.35)" })}
+            {/* Visual Screen: Shows Real User Photo OR Category Visualizer with Laser Scanner */}
+            <div
+              style={{
+                position: "relative",
+                height: 180,
+                borderRadius: 12,
+                background: "#08130C",
+                marginBottom: 16,
+                overflow: "hidden",
+                border: "1.5px solid var(--line-dark)"
+              }}
+            >
+              {imagePreview ? (
+                <img src={imagePreview} alt="Defect" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,var(--paddy),var(--ink))" }}>
+                  {React.createElement(catOf(category).icon, { size: 54, color: "rgba(255,255,255,0.4)" })}
+                </div>
+              )}
+
+              {/* Scanning Laser Beam */}
+              {analyzing && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: "var(--turmeric)",
+                    boxShadow: "0 0 16px 4px rgba(232,163,61,0.9)",
+                    animation: "geLaserScan 1.2s ease-in-out infinite alternate"
+                  }}
+                />
+              )}
+
+              {/* HUD Coordinates & Tag */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 10,
+                  left: 10,
+                  background: "rgba(11,23,16,0.85)",
+                  backdropFilter: "blur(6px)",
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  color: "#E8A33D",
+                  fontSize: 11,
+                  fontFamily: "var(--font-mono)"
+                }}
+              >
+                HUD // {ward} • {gpsInfo ? "GPS LOCK" : "SIMULATED GIS"}
               </div>
-              {analyzing && <div style={{ position: "absolute", left: 0, right: 0, height: 2, background: "var(--turmeric)", boxShadow: "0 0 12px 3px rgba(232,163,61,0.8)", animation: "geScan 1.6s ease-in-out infinite alternate" }} />}
             </div>
 
+            {/* Live Progress Ticker */}
             {analyzing && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--paddy)" }}>
-                <Loader2 size={15} style={{ animation: "geSpin 1s linear infinite" }} /> Analyzing your report…
+              <div style={{ padding: "8px 0 12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--paddy)", marginBottom: 8 }}>
+                  <Loader2 size={16} style={{ animation: "geSpin 1s linear infinite" }} />
+                  {analysisPhase === 1 && "Phase 1/4: Analyzing Image Pixels & Edge Fractures..."}
+                  {analysisPhase === 2 && "Phase 2/4: Classifying Hazard Pattern (Neural Vision Model)..."}
+                  {analysisPhase === 3 && "Phase 3/4: Cross-referencing Village GIS & Ward SLA..."}
+                  {analysisPhase === 4 && "Phase 4/4: Generating Automated Department Work Order..."}
+                </div>
+                <div style={{ height: 6, borderRadius: 99, background: "var(--line-dark)", overflow: "hidden" }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${(analysisPhase / 4) * 100}%`,
+                      background: "var(--turmeric)",
+                      transition: "width 0.4s ease"
+                    }}
+                  />
+                </div>
               </div>
             )}
 
+            {/* Analysis Result */}
             {analysis && !analyzing && (
               <div className="ge-fadeup">
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                   <InfoTile label="Problem Detected" value={analysis.problemType} />
-                  <InfoTile label="Severity" value={analysis.severity} valueColor={SEVERITY_COLOR[analysis.severity]} />
-                  <InfoTile label="AI Confidence" value={`${Math.round(analysis.confidence * 100)}%`} />
-                  <InfoTile label="Department" value={analysis.suggestedDepartment} />
+                  <InfoTile label="Severity Rating" value={analysis.severity} valueColor={SEVERITY_COLOR[analysis.severity]} />
+                  <InfoTile label="AI Confidence Score" value={`${Math.round(analysis.confidence * 100)}%`} />
+                  <InfoTile label="Assigned Department" value={analysis.suggestedDepartment} />
                 </div>
-                <div style={{ background: "rgba(214,69,69,0.08)", border: "1px solid rgba(214,69,69,0.2)", borderRadius: 12, padding: 12, display: "flex", gap: 10 }}>
-                  <AlertTriangle size={16} color="var(--crit)" style={{ flexShrink: 0, marginTop: 1 }} />
-                  <div style={{ fontSize: 12.5 }}><b>Potential Risk:</b> {analysis.safetyRisk}</div>
+                <div
+                  style={{
+                    background: "rgba(214,69,69,0.08)",
+                    border: "1px solid rgba(214,69,69,0.2)",
+                    borderRadius: 12,
+                    padding: 12,
+                    display: "flex",
+                    gap: 10
+                  }}
+                >
+                  <AlertTriangle size={18} color="var(--crit)" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <div style={{ fontSize: 12.5 }}>
+                    <b>Safety & Health Risk:</b> {analysis.safetyRisk}
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
+          {/* Duplicate Detection Alert */}
           {analysis && duplicates.length > 0 && (
             <div className="ge-card ge-fadeup" style={{ padding: 18, marginBottom: 20, border: "1.5px solid var(--turmeric)" }}>
               <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
                 <Sparkles size={16} color="var(--turmeric)" />
-                <div style={{ fontWeight: 700, fontSize: 14 }}>Possible duplicate detected</div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>Possible duplicate issue detected</div>
               </div>
               <div style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 12 }}>
-                {duplicates.length} similar open report{duplicates.length > 1 ? "s" : ""} found in {ward}. Master complaint: <span className="ge-mono">{duplicates[0].id}</span>
+                {duplicates.length} similar open report found in {ward}. Master complaint:{" "}
+                <span className="ge-mono">{duplicates[0].id}</span>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="ge-btn" style={{ flex: 1, background: dupChoice === "join" ? "var(--paddy)" : "var(--husk-2)", color: dupChoice === "join" ? "#fff" : "var(--ink-text)", border: "1px solid var(--line-dark)" }} onClick={() => setDupChoice("join")}>Join existing report</button>
-                <button className="ge-btn" style={{ flex: 1, background: dupChoice === "separate" ? "var(--paddy)" : "var(--husk-2)", color: dupChoice === "separate" ? "#fff" : "var(--ink-text)", border: "1px solid var(--line-dark)" }} onClick={() => setDupChoice("separate")}>Submit as separate issue</button>
+                <button
+                  className="ge-btn"
+                  style={{
+                    flex: 1,
+                    background: dupChoice === "join" ? "var(--paddy)" : "var(--husk-2)",
+                    color: dupChoice === "join" ? "#fff" : "var(--ink-text)",
+                    border: "1px solid var(--line-dark)"
+                  }}
+                  onClick={() => setDupChoice("join")}
+                >
+                  Join existing report
+                </button>
+                <button
+                  className="ge-btn"
+                  style={{
+                    flex: 1,
+                    background: dupChoice === "separate" ? "var(--paddy)" : "var(--husk-2)",
+                    color: dupChoice === "separate" ? "#fff" : "var(--ink-text)",
+                    border: "1px solid var(--line-dark)"
+                  }}
+                  onClick={() => setDupChoice("separate")}
+                >
+                  Submit as separate issue
+                </button>
               </div>
             </div>
           )}
 
           <div style={{ display: "flex", gap: 10 }}>
-            <button className="ge-btn ge-btn-ghost" onClick={() => setStep(1)}><ChevronLeft size={15} /> Back</button>
-            <button className="ge-btn ge-btn-primary" disabled={!analysis || (duplicates.length > 0 && !dupChoice)} style={{ flex: 1 }} onClick={() => setStep(3)}>{t.step_next}</button>
+            <button className="ge-btn ge-btn-ghost" onClick={() => setStep(1)}>
+              <ChevronLeft size={15} /> Back
+            </button>
+            <button
+              className="ge-btn ge-btn-primary"
+              disabled={!analysis || (duplicates.length > 0 && !dupChoice)}
+              style={{ flex: 1 }}
+              onClick={() => setStep(3)}
+            >
+              {t.step_next}
+            </button>
           </div>
         </div>
       )}
 
+      {/* STEP 3: CONFIRM & SUBMIT */}
       {step === 3 && analysis && (
         <div className="ge-fadeup">
-          <h2 className="ge-serif" style={{ fontSize: 24, marginBottom: 4 }}>Confirm & Submit</h2>
-          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 20 }}>Review your report before it's sent to the Panchayat.</p>
-          <div className="ge-card" style={{ padding: 20, marginBottom: 22 }}>
-            <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 16 }}>
-              <CategoryIcon category={category} box={48} />
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>{category}</div>
-                <div style={{ fontSize: 12.5, color: "var(--muted)" }}>{description || "No additional description"}</div>
+          <h2 className="ge-serif" style={{ fontSize: 25, fontWeight: 700, marginBottom: 4 }}>
+            Confirm & Dispatch
+          </h2>
+          <p style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 20 }}>
+            Review your complaint details before routing to the Panchayat.
+          </p>
+
+          <div className="ge-card" style={{ padding: 22, marginBottom: 22 }}>
+            <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 18 }}>
+              {imagePreview ? (
+                <div style={{ width: 72, height: 72, borderRadius: 12, overflow: "hidden", border: "1px solid var(--line-dark)", flexShrink: 0 }}>
+                  <img src={imagePreview} alt="Evidence thumbnail" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              ) : (
+                <CategoryIcon category={category} box={60} />
+              )}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>{category}</div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+                  {description || "No additional description"}
+                </div>
+                {gpsInfo && (
+                  <div style={{ fontSize: 11, color: "var(--paddy)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                    <MapPin size={11} /> GPS: {gpsInfo}
+                  </div>
+                )}
               </div>
             </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <InfoTile label="Location" value={ward} icon={MapPin} />
               <InfoTile label="Severity" value={analysis.severity} valueColor={SEVERITY_COLOR[analysis.severity]} />
               <InfoTile label="Category" value={analysis.category} />
-              <InfoTile label="Department" value={analysis.suggestedDepartment} />
+              <InfoTile label="Assigned Department" value={analysis.suggestedDepartment} />
             </div>
           </div>
+
           <div style={{ display: "flex", gap: 10 }}>
-            <button className="ge-btn ge-btn-ghost" onClick={() => setStep(2)}><ChevronLeft size={15} /> Back</button>
-            <button className="ge-btn ge-btn-primary" style={{ flex: 1 }} onClick={submit}>Submit Complaint <ArrowRight size={15} /></button>
+            <button className="ge-btn ge-btn-ghost" onClick={() => setStep(2)}>
+              <ChevronLeft size={15} /> Back
+            </button>
+            <button className="ge-btn ge-btn-primary" style={{ flex: 1, padding: 14 }} onClick={submit}>
+              Submit Complaint & Earn 20 XP <ArrowRight size={16} />
+            </button>
           </div>
         </div>
       )}
@@ -1031,23 +2661,29 @@ function ReportFlow({ complaints, addComplaint, setPage, setSelectedComplaint, a
 function InfoTile({ label, value, valueColor, icon: Icon }) {
   return (
     <div style={{ background: "rgba(31,77,54,0.05)", borderRadius: 10, padding: "9px 12px" }}>
-      <div style={{ fontSize: 10.5, color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 }}>{Icon && <Icon size={10} />}{label}</div>
+      <div style={{ fontSize: 10.5, color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 }}>
+        {Icon && <Icon size={10} />}
+        {label}
+      </div>
       <div style={{ fontWeight: 700, fontSize: 13.5, color: valueColor || "var(--ink-text)" }}>{value}</div>
     </div>
   );
 }
 
 /* ============================================================
-   COMPLAINT DETAIL
+   COMPLAINT DETAIL (WITH EVIDENCE PHOTO & GPS)
    ============================================================ */
 function ComplaintDetail({ complaint, setPage, updateComplaint, addXp }) {
   if (!complaint) return <div style={{ padding: 60, textAlign: "center" }}>No complaint selected.</div>;
   const [verify, setVerify] = useState(null);
+  const [workOrderOpen, setWorkOrderOpen] = useState(false);
   const stageIndex = STATUS_FLOW.indexOf(complaint.status);
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 90px" }}>
-      <button className="ge-btn ge-btn-ghost" style={{ marginBottom: 18 }} onClick={() => setPage("citizenDashboard")}><ChevronLeft size={15} /> Back to dashboard</button>
+      <button className="ge-btn ge-btn-ghost" style={{ marginBottom: 18 }} onClick={() => setPage("citizenDashboard")}>
+        <ChevronLeft size={15} /> Back to dashboard
+      </button>
 
       <div className="ge-card" style={{ padding: 24, marginBottom: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
@@ -1055,7 +2691,8 @@ function ComplaintDetail({ complaint, setPage, updateComplaint, addXp }) {
             <div className="ge-mono" style={{ fontSize: 12, color: "var(--muted)" }}>{complaint.id}</div>
             <div className="ge-serif" style={{ fontSize: 21, fontWeight: 600, margin: "4px 0" }}>{complaint.title}</div>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <SeverityBadge severity={complaint.severity} /><StatusBadge status={complaint.status} />
+              <SeverityBadge severity={complaint.severity} />
+              <StatusBadge status={complaint.status} />
             </div>
           </div>
           <CategoryIcon category={complaint.category} box={50} />
@@ -1065,7 +2702,56 @@ function ComplaintDetail({ complaint, setPage, updateComplaint, addXp }) {
           <InfoTile label="Department" value={complaint.dept} />
           <InfoTile label="Reported" value={complaint.createdAt} icon={Clock} />
         </div>
+
+        {/* Evidence Photo Card */}
+        {complaint.image && (
+          <div style={{ marginTop: 18, borderTop: "1px solid var(--line-dark)", paddingTop: 16 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--paddy)", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+              <Camera size={15} /> Citizen Photographic Evidence (AI Verified)
+            </div>
+            <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: "1.5px solid var(--line-dark)", maxHeight: 260, background: "#0B1710" }}>
+              <img src={complaint.image} alt={complaint.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <div style={{ position: "absolute", bottom: 8, left: 8, right: 8, display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(11,23,16,0.85)", backdropFilter: "blur(6px)", padding: "6px 12px", borderRadius: 8, fontSize: 11, color: "#FBF8F0" }}>
+                <span>🎯 AI Confidence: {Math.round((complaint.confidence || 0.94) * 100)}%</span>
+                {complaint.gps && <span>📍 {complaint.gps}</span>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 1-Click Official Work Order Generator Button */}
+        <div style={{ marginTop: 18, borderTop: "1px solid var(--line-dark)", paddingTop: 16 }}>
+          <button
+            type="button"
+            onClick={() => setWorkOrderOpen(true)}
+            className="ge-btn"
+            style={{
+              width: "100%",
+              padding: "13px 18px",
+              background: "linear-gradient(135deg, #0B1710 0%, #1F4D36 100%)",
+              color: "#FBF8F0",
+              border: "1.5px solid var(--turmeric)",
+              borderRadius: 12,
+              fontSize: 13.5,
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              boxShadow: "0 6px 18px rgba(0,0,0,0.2)"
+            }}
+          >
+            <FileText size={17} color="var(--turmeric)" />
+            <span>Generate Official Government Work Order & Notice (PDF)</span>
+          </button>
+        </div>
       </div>
+
+      <WorkOrderModal
+        isOpen={workOrderOpen}
+        onClose={() => setWorkOrderOpen(false)}
+        complaint={complaint}
+      />
 
       <div className="ge-card" style={{ padding: 24, marginBottom: 20 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 18 }}>Timeline</div>
@@ -1523,6 +3209,53 @@ export default function GramEyeApp() {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [xp, setXp] = useState(340);
 
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("grameye_user");
+      return saved ? JSON.parse(saved) : {
+        id: "usr-1",
+        fullName: "Rahul Sahu",
+        mobile: "6268814185",
+        role: "citizen",
+        ward: "Ward 4",
+        village: "Rampur",
+        xp: 340
+      };
+    } catch {
+      return null;
+    }
+  });
+
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [voiceSahayakOpen, setVoiceSahayakOpen] = useState(false);
+  const [emergencyAlertOpen, setEmergencyAlertOpen] = useState(false);
+  const [authToast, setAuthToast] = useState(null);
+
+  function handleLoginSuccess(user) {
+    setCurrentUser(user);
+    const assignedRole = (user.role || "").toLowerCase() === "admin" ? "admin" : "citizen";
+    setRole(assignedRole);
+    if (user.xp) setXp(user.xp);
+    try {
+      localStorage.setItem("grameye_user", JSON.stringify(user));
+    } catch {}
+    setAuthToast(`🎉 Welcome, ${user.fullName}! Successfully signed in.`);
+    setTimeout(() => setAuthToast(null), 5000);
+  }
+
+  function handleConfirmLogout() {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem("grameye_user");
+    } catch {}
+    setRole("citizen");
+    setPage("landing");
+    setAuthToast("👋 You have logged out safely.");
+    setTimeout(() => setAuthToast(null), 5000);
+  }
+
   function addComplaint(c) { setComplaints(prev => [c, ...prev]); }
   function updateComplaint(id, patch) {
     setComplaints(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
@@ -1533,6 +3266,7 @@ export default function GramEyeApp() {
   return (
     <div className="ge-root" style={{ minHeight: "100vh" }}>
       <style>{TOKENS}{`
+        /* Grid and Flex Layout Helpers */
         .ge-hero-grid{ grid-template-columns: 1fr; }
         @media (min-width:860px){ .ge-hero-grid{ grid-template-columns: var(--gtc, 1fr 1fr); } }
         .ge-3col{ grid-template-columns: repeat(2,1fr) !important; }
@@ -1549,23 +3283,258 @@ export default function GramEyeApp() {
         }
         .ge-table-head, .ge-table-row{ grid-template-columns: 70px 1.6fr 70px 90px 100px 80px 90px !important; }
         @media (min-width:640px){ .ge-table-head, .ge-table-row{ grid-template-columns: 90px 2fr 90px 110px 130px 100px 120px !important; } }
-        @media (max-width:640px){ .ge-mobile-nav{ display:flex !important; } }
-        @media (min-width:641px){ .ge-mobile-nav{ display:none !important; } }
+
+        /* Responsive Navbar & Mobile Drawer */
+        @media (max-width: 920px) {
+          .ge-desktop-nav { display: none !important; }
+          .ge-mobile-menu-btn { display: flex !important; }
+          .ge-hide-md { display: none !important; }
+        }
+        @media (min-width: 921px) {
+          .ge-desktop-nav { display: flex !important; }
+          .ge-mobile-menu-btn { display: none !important; }
+        }
+        @media (max-width: 640px) {
+          html, body, #root, .ge-root {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+          }
+          *, *::before, *::after {
+            box-sizing: border-box !important;
+          }
+          .ge-hide-sm { display: none !important; }
+          .ge-mobile-nav { display: flex !important; width: 100% !important; max-width: 100vw !important; }
+          .ge-mobile-nav-spacer { height: 75px !important; display: block !important; }
+
+          /* All Page Outer Containers Mobile Indentation */
+          div[style*="max-width: 1100"],
+          div[style*="maxWidth: 1100"],
+          div[style*="maxWidth: 1140"],
+          div[style*="max-width: 1140"],
+          div[style*="maxWidth: 1160"],
+          div[style*="max-width: 1160"],
+          div[style*="maxWidth: 1180"],
+          div[style*="max-width: 1180"],
+          div[style*="maxWidth: 1240"],
+          div[style*="max-width: 1240"] {
+            padding: 18px 12px 85px !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+            box-sizing: border-box !important;
+          }
+
+          /* All Cards Mobile Padding & Margin */
+          .ge-card {
+            padding: 16px 12px !important;
+            border-radius: 16px !important;
+            margin-bottom: 14px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+
+          /* Headings on Mobile */
+          .ge-serif {
+            word-break: break-word !important;
+          }
+          .ge-serif[style*="font-size: clamp"],
+          .ge-serif[style*="fontSize: clamp"] {
+            font-size: clamp(22px, 6.5vw, 34px) !important;
+            line-height: 1.15 !important;
+          }
+
+          .ge-hero-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .ge-hero-cta {
+            flex-direction: column !important;
+            width: 100% !important;
+            gap: 10px !important;
+          }
+          .ge-hero-cta .ge-btn {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+
+          /* Grids collapsing on mobile */
+          .ge-2col { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .ge-3col { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .ge-4col { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .ge-5col {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+          .ge-5col > :last-child:nth-child(odd) {
+            grid-column: span 2;
+          }
+
+          .ge-stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+            padding: 16px 12px !important;
+          }
+          .ge-stats-grid .ge-serif {
+            font-size: 24px !important;
+          }
+
+          /* Tables horizontal scroll */
+          table {
+            display: block !important;
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          input, select, textarea {
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+          }
+        }
+        @media (min-width: 641px) {
+          .ge-mobile-nav { display: none !important; }
+          .ge-mobile-nav-spacer { display: none !important; }
+        }
       `}</style>
 
-      <Navbar page={page} setPage={setPage} lang={lang} setLang={setLang} role={role} setRole={setRole} xp={xp} />
+      {/* Floating Auth Toast Notification */}
+      {authToast && (
+        <div
+          style={{
+            position: "fixed",
+            top: 75,
+            right: 24,
+            zIndex: 999,
+            background: "#132A1C",
+            color: "#FBF8F0",
+            border: "1.5px solid var(--turmeric)",
+            borderRadius: 12,
+            padding: "12px 18px",
+            boxShadow: "0 14px 34px rgba(0,0,0,0.4)",
+            fontSize: 13.5,
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            animation: "geFadeUp 0.3s ease-out"
+          }}
+        >
+          <span>{authToast}</span>
+          <button
+            onClick={() => setAuthToast(null)}
+            style={{ background: "none", border: "none", color: "#8EAA97", cursor: "pointer", padding: 2 }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
+
+      <Navbar
+        page={page}
+        setPage={setPage}
+        lang={lang}
+        setLang={setLang}
+        role={role}
+        setRole={setRole}
+        xp={xp}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setAuthModalOpen(true)}
+        onOpenLogoutModal={() => setLogoutModalOpen(true)}
+        onOpenVoiceSahayak={() => setVoiceSahayakOpen(true)}
+        onOpenEmergencyAlert={() => setEmergencyAlertOpen(true)}
+      />
 
       {page === "landing" && <Landing setPage={setPage} lang={lang} complaints={complaints} />}
       {page === "citizenDashboard" && <CitizenDashboard complaints={complaints} setPage={setPage} setSelectedComplaint={setSelectedComplaint} xp={xp} />}
       {page === "report" && <ReportFlow complaints={complaints} addComplaint={addComplaint} setPage={setPage} setSelectedComplaint={setSelectedComplaint} addXp={addXp} lang={lang} />}
       {page === "complaintDetail" && <ComplaintDetail complaint={selectedComplaint} setPage={setPage} updateComplaint={updateComplaint} addXp={addXp} />}
       {page === "map" && <MapPage complaints={complaints} />}
+      {page === "noticeBoard" && <NoticeBoard currentUser={currentUser} role={role} addXp={addXp} lang={lang} />}
+      {page === "kisanPortal" && <KisanPortal addXp={addXp} />}
+      {page === "certificates" && <CertificatePortal currentUser={currentUser} addXp={addXp} />}
+      {page === "gramNidhi" && <GramNidhi complaints={complaints} />}
+      {page === "gramSabha" && <GramSabha addXp={addXp} />}
       {page === "rewards" && <RewardsPage xp={xp} />}
       {page === "adminDashboard" && <AdminDashboard complaints={complaints} setPage={setPage} />}
       {page === "adminComplaints" && <AdminComplaints complaints={complaints} updateComplaint={updateComplaint} />}
 
+      <Footer setPage={setPage} />
+
       <div style={{ height: 60 }} className="ge-mobile-nav-spacer" />
       <MobileBottomNav page={page} setPage={setPage} role={role} />
+
+      {/* Floating AI Voice Sahayak Widget Button (Bottom Right) */}
+      <button
+        type="button"
+        className="ge-hide-sm"
+        onClick={() => setVoiceSahayakOpen(true)}
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: 70,
+          background: "linear-gradient(135deg, #0B1710 0%, #1F4D36 100%)",
+          color: "#FBF8F0",
+          border: "2px solid var(--turmeric)",
+          borderRadius: 999,
+          padding: "11px 18px",
+          boxShadow: "0 10px 32px rgba(0,0,0,0.45)",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          cursor: "pointer",
+          fontWeight: 800,
+          fontSize: 13.5,
+          animation: "gePulseGlow 3s infinite"
+        }}
+        title="Open AI Voice Sahayak (बोलकर सवाल पूछें)"
+      >
+        <div
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 99,
+            background: "var(--turmeric)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Mic size={16} color="#231402" />
+        </div>
+        <span>AI Voice Sahayak (बोलें)</span>
+      </button>
+
+      {/* Interactive Phone + OTP Authentication Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        lang={lang}
+      />
+
+      {/* Animated Logout Confirmation Modal */}
+      <LogoutConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirmLogout={handleConfirmLogout}
+        userName={currentUser?.fullName || "Citizen"}
+      />
+
+      {/* Interactive AI Voice Sahayak Modal */}
+      <VoiceSahayakModal
+        isOpen={voiceSahayakOpen}
+        onClose={() => setVoiceSahayakOpen(false)}
+        lang={lang}
+        setPage={setPage}
+      />
+
+      {/* Emergency Aapda Siren & Alert Modal */}
+      <EmergencyAlertModal
+        isOpen={emergencyAlertOpen}
+        onClose={() => setEmergencyAlertOpen(false)}
+        role={role}
+      />
     </div>
   );
 }
