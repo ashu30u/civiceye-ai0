@@ -170,7 +170,7 @@ export default function AuthModal({
         mobile: mobile.slice(-10),
         role: selectedRole === "admin" ? "admin" : "citizen",
         ward: ward || "Ward 3",
-        village: "Rampur",
+        village: "Kodebod",
         xp: 340
       };
 
@@ -189,11 +189,11 @@ export default function AuthModal({
   const handleCompleteProfile = () => {
     const finalUser = {
       id: `usr-${Date.now().toString().slice(-4)}`,
-      fullName: fullName.trim() || "Citizen of Rampur",
+      fullName: fullName.trim() || "Citizen of Kodebod",
       mobile: mobile.slice(-10) || "6268814185",
       role: selectedRole === "admin" ? "admin" : "citizen",
       ward: ward || "Ward 3",
-      village: "Rampur",
+      village: "Kodebod",
       xp: 150 // Welcome bonus
     };
 
@@ -209,11 +209,11 @@ export default function AuthModal({
       ? {
           id: "adm-1",
           fullName: "Sarpanch Rameshwar Patel",
-          email: "sarpanch@rampur.gov.in",
+          email: "sarpanch@kodebod.gov.in",
           mobile: "9876543210",
           role: "admin",
           ward: "Panchayat Bhavan",
-          village: "Rampur",
+          village: "Kodebod",
           xp: 850
         }
       : {
@@ -222,7 +222,7 @@ export default function AuthModal({
           mobile: "6268814185",
           role: "citizen",
           ward: "Ward 4",
-          village: "Rampur",
+          village: "Kodebod",
           xp: 340
         };
 

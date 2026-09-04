@@ -696,7 +696,7 @@ export default function KisanPortal({ addXp }) {
       `*प्रति एकड़ खुराक:* ${med.dosePerAcre}\n` +
       `*अनुमानित खर्च:* ${med.costAcre}\n\n` +
       `*4. देसी व जैविक उपाय:* ${diagnosisResult.organicRemedy.recipe1}\n\n` +
-      `_जारीकर्ता: ग्राम पंचायत रामपुर कृषि प्रकोष्ठ व GramEye AI (ICAR संबद्ध)_`;
+      `_जारीकर्ता: ग्राम पंचायत कोड़ेबोड कृषि प्रकोष्ठ व GramEye AI (ICAR संबद्ध)_`;
 
     const url = `https://api.whatsapp.com/send?phone=916268814185&text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
@@ -1263,7 +1263,7 @@ export default function KisanPortal({ addXp }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14, borderBottom: "2px solid #1F4D36", paddingBottom: 16, marginBottom: 18 }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.1em", color: "#8B5E34", textTransform: "uppercase" }}>
-              ग्राम पंचायत रामपुर • कृषि विज्ञान एवं फसल रक्षा प्रकोष्ठ
+              ग्राम पंचायत कोड़ेबोड • कृषि विज्ञान एवं फसल रक्षा प्रकोष्ठ
             </div>
             <div className="ge-serif" style={{ fontSize: "clamp(20px, 3.5vw, 24px)", fontWeight: 800, color: "#1F4D36", marginTop: 2 }}>
               सम्पूर्ण फसल रोग जांच व विस्तृत निवारण रिपोर्ट
@@ -1860,7 +1860,7 @@ export default function KisanPortal({ addXp }) {
               }}
             >
               <div>
-                <div style={{ fontSize: 11, color: "var(--muted)" }}>कृषि विस्तार अधिकारी, रामपुर</div>
+                <div style={{ fontSize: 11, color: "var(--muted)" }}>कृषि विस्तार अधिकारी, कोड़ेबोड</div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "#8B5E34" }}>+91 6268814185</div>
               </div>
               <span className="ge-chip" style={{ background: "var(--turmeric)", color: "#231402", fontSize: 10.5 }}>Panchayat</span>

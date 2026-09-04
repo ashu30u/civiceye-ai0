@@ -350,7 +350,7 @@ export default function CertificatePortal({ currentUser, addXp }) {
                 छत्तीसगढ़ शासन • पंचायत एवं ग्रामीण विकास विभाग
               </div>
               <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 800, color: "#1F4D36", margin: "3px 0" }}>
-                कार्यालय ग्राम पंचायत रामपुर
+                कार्यालय ग्राम पंचायत कोड़ेबोड
               </div>
               <div style={{ fontSize: 11.5, color: "#486151" }}>
                 तहसील: कुरूद, जिला: धमतरी (छ.ग.) • पिन कोड: 493663
@@ -359,7 +359,7 @@ export default function CertificatePortal({ currentUser, addXp }) {
 
             {/* Cert Ref & Date */}
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, fontWeight: 700, color: "#3B5244", marginBottom: 14 }}>
-              <div>प्रमाण पत्र क्र.: <span style={{ color: "#1F4D36", fontFamily: "monospace" }}>{generatedCert ? generatedCert.certNum : "GP-RMP/CERT/2026/4185"}</span></div>
+              <div>प्रमाण पत्र क्र.: <span style={{ color: "#1F4D36", fontFamily: "monospace" }}>{generatedCert ? generatedCert.certNum : "GP-KBD/CERT/2026/4185"}</span></div>
               <div>दिनांक: <span>{generatedCert ? generatedCert.dateStr : "03 सितंबर 2026"}</span></div>
             </div>
 
@@ -381,7 +381,7 @@ export default function CertificatePortal({ currentUser, addXp }) {
 
             {/* Hindi Legal Verification Text */}
             <p style={{ fontSize: 13, textAlign: "justify", textIndent: "2em", marginBottom: 14 }}>
-              प्रमाणित किया जाता है कि <b>{applicantName}</b>, आत्मज/पत्नी <b>{guardianName}</b>, ग्राम रामपुर, <b>{ward}</b>, तहसील कुरूद, जिला धमतरी (छ.ग.) के स्थायी निवासी हैं।
+              प्रमाणित किया जाता है कि <b>{applicantName}</b>, आत्मज/पत्नी <b>{guardianName}</b>, ग्राम कोड़ेबोड, <b>{ward}</b>, तहसील कुरूद, जिला धमतरी (छ.ग.) के स्थायी निवासी हैं।
             </p>
 
             <p style={{ fontSize: 13, textAlign: "justify", textIndent: "2em", marginBottom: 14 }}>
@@ -427,7 +427,7 @@ export default function CertificatePortal({ currentUser, addXp }) {
                   सरपंच / सचिव
                 </div>
                 <div style={{ fontSize: 10, color: "#7C9184" }}>
-                  ग्राम पंचायत रामपुर, धमतरी
+                  ग्राम पंचायत कोड़ेबोड, धमतरी
                 </div>
               </div>
             </div>

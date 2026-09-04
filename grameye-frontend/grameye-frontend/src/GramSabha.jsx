@@ -202,7 +202,7 @@ export default function GramSabha({ addXp }) {
               UPCOMING OFFICIAL GRAM SABHA (ग्राम सभा बैठक)
             </div>
             <div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-text)", marginTop: 2 }}>
-              15 September 2026 • 10:30 AM at Panchayat Bhavan Rampur
+              15 September 2026 • 10:30 AM at Panchayat Bhavan Kodebod
             </div>
             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
               Any proposal with 50+ citizen votes gets automatic formal discussion on the Sarpanch's agenda!

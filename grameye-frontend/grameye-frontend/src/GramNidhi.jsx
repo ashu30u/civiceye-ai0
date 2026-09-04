@@ -75,7 +75,7 @@ const INITIAL_EXPENSES = [
     complaintId: "GRM-1025",
     title: "Primary school classroom structural wall plastering",
     ward: "Ward 4",
-    contractor: "Rampur Gram Nirman Samiti",
+    contractor: "Kodebod Gram Nirman Samiti",
     amount: 45000,
     status: "PAID",
     date: "2026-08-20",
@@ -134,7 +134,7 @@ export default function GramNidhi({ complaints = [] }) {
             </div>
           </div>
           <div style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>
-            100% Transparent, Blockchain-Audit Inspired Public Ledger of Panchayat Rampur (FY 2026-27)
+            100% Transparent, Blockchain-Audit Inspired Public Ledger of Panchayat Kodebod (FY 2026-27)
           </div>
         </div>
 

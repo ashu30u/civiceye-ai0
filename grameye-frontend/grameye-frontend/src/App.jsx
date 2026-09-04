@@ -22,6 +22,7 @@ import NoticeBoard from "./NoticeBoard.jsx";
 import EmergencyAlertModal from "./EmergencyAlertModal.jsx";
 import KisanPortal from "./KisanPortal.jsx";
 import CertificatePortal from "./CertificatePortal.jsx";
+import LiveVillageKodebod from "./LiveVillageKodebod.jsx";
 
 /* ============================================================
    DESIGN TOKENS
@@ -125,7 +126,7 @@ const T = {
     step_location: "📍 Choose the location",
     step_next: "➡️ Continue",
     goodMorning: "Good Morning",
-    village: "Rampur Village",
+    village: "Kodebod Village",
   },
   hi: {
     tagline: "आपका गाँव। आपकी आवाज़। स्मार्ट कल।",
@@ -137,7 +138,7 @@ const T = {
     step_location: "📍 जगह चुनें",
     step_next: "➡️ आगे बढ़ें",
     goodMorning: "सुप्रभात",
-    village: "रामपुर गाँव",
+    village: "कोड़ेबोड गाँव",
   },
 };
 
@@ -352,15 +353,16 @@ function VillageMap({ complaints, onSelectWard, selectedWard, height = 340 }) {
 /* ============================================================
    VILLAGE ILLUSTRATION (CSS-parallax hero, no heavy 3D)
    ============================================================ */
-function VillageScene() {
+function VillageScene({ onExplore }) {
   const [mx, setMx] = useState(0);
   return (
     <div
+      onClick={onExplore}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         setMx(((e.clientX - r.left) / r.width - 0.5) * 14);
       }}
-      style={{ position: "relative", minHeight: 250, height: "clamp(250px, 42vw, 420px)", width: "100%", maxWidth: "100%", borderRadius: 24, overflow: "hidden", background: "linear-gradient(180deg,#F4C374 0%, #E8A33D 32%, #1F4D36 33%, #0B1710 100%)" }}
+      style={{ position: "relative", minHeight: 250, height: "clamp(250px, 42vw, 420px)", width: "100%", maxWidth: "100%", borderRadius: 24, overflow: "hidden", background: "linear-gradient(180deg,#F4C374 0%, #E8A33D 32%, #1F4D36 33%, #0B1710 100%)", cursor: onExplore ? "pointer" : "default" }}
     >
       <div style={{ position: "absolute", top: 30, right: 60, width: 70, height: 70, borderRadius: 99, background: "#FBF3D8", boxShadow: "0 0 60px 20px rgba(251,243,216,0.5)", transform: `translateX(${mx * 0.4}px)` }} />
       {[...Array(5)].map((_, i) => (
@@ -384,8 +386,8 @@ function VillageScene() {
       ))}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 26, background: "#132A1C" }} />
       <div style={{ position: "absolute", bottom: 26, left: "40%", width: 60, height: 60, borderRadius: "50%", border: "5px solid #3C87A6", background: "#6FADC7AA", transform: `translateX(${mx * 0.5}px)` }} />
-      <div style={{ position: "absolute", top: 16, left: 16, color: "#FBF8F0", fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.08em", opacity: 0.85 }}>
-        LIVE VILLAGE VIEW · RAMPUR
+      <div style={{ position: "absolute", top: 16, left: 16, color: "#FBF8F0", fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.08em", opacity: 0.95, background: "rgba(11,23,16,0.6)", padding: "4px 10px", borderRadius: 8 }}>
+        🌾 LIVE VILLAGE VIEW · KODEBOD · KURUD · DHAMTARI (क्लिक करें ↗)
       </div>
     </div>
   );
@@ -421,6 +423,7 @@ function Navbar({
 
   // Services Dropdown Menu
   const serviceLinks = [
+    ["kodebod", "🌾 Live Kodebod (कोड़ेबोड दर्शन)", "Census 2011, Live Weather, Map & Facilities"],
     ["certificates", "📜 Certificates (प्रमाण पत्र)", "Instant Digital Panchayat Certificates"],
     ["gramNidhi", "💰 Gram Nidhi (बजट लेजर)", "100% Transparent Public Works & Bills"],
     ["gramSabha", "🗳️ Gram Sabha (जनमत व प्रस्ताव)", "Propose Village Works & Community Voting"],
@@ -1127,13 +1130,27 @@ function Landing({ setPage, lang, complaints }) {
             <button className="ge-btn ge-btn-primary" onClick={() => setPage("report")} style={{ padding: "14px 22px", fontSize: 14.5 }}>
               {t.reportProblem} <ArrowRight size={16} />
             </button>
+            <button
+              className="ge-btn"
+              onClick={() => setPage("kodebod")}
+              style={{
+                background: "linear-gradient(135deg, rgba(232,163,61,0.22) 0%, rgba(232,163,61,0.12) 100%)",
+                color: "var(--turmeric)",
+                border: "1.5px solid var(--turmeric)",
+                padding: "14px 22px",
+                fontSize: 14.5,
+                fontWeight: 800
+              }}
+            >
+              🌾 Live Kodebod (गाँव दर्शन) ➔
+            </button>
             <button className="ge-btn ge-btn-outline" onClick={() => setPage("map")} style={{ padding: "14px 22px", fontSize: 14.5 }}>
               {t.exploreVillage}
             </button>
           </div>
         </div>
         <div className="ge-fadeup" style={{ animationDelay: "0.15s" }}>
-          <VillageScene />
+          <VillageScene onExplore={() => setPage("kodebod")} />
         </div>
       </section>
 
@@ -1215,7 +1232,7 @@ function Landing({ setPage, lang, complaints }) {
         <div className="ge-glass" style={{ padding: 28, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <div className="ge-chip" style={{ background: "rgba(232,163,61,0.14)", color: "var(--turmeric-light)", alignSelf: "flex-start" }}>Village Development Index</div>
           <div className="ge-serif" style={{ fontSize: 52, fontWeight: 600, margin: "14px 0 4px" }}>78<span style={{ fontSize: 22, opacity: 0.5 }}>/100</span></div>
-          <div style={{ fontSize: 13, color: "rgba(251,248,240,0.6)", marginBottom: 18 }}>Rampur Village — updated weekly from live complaint data</div>
+          <div style={{ fontSize: 13, color: "rgba(251,248,240,0.6)", marginBottom: 18 }}>Kodebod Village (Kurud, Dhamtari) — updated weekly from live complaint data</div>
           {[["Infrastructure", 72], ["Water", 65], ["Sanitation", 81], ["Electricity", 85]].map(([label, v], i) => (
             <div key={i} style={{ marginBottom: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4, color: "rgba(251,248,240,0.75)" }}>
@@ -1328,7 +1345,7 @@ function CitizenDashboard({ complaints, setPage, setSelectedComplaint, xp }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
         <div>
           <div className="ge-serif" style={{ fontSize: 28, fontWeight: 600 }}>Good Morning, Rahul 👋</div>
-          <div style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>Rampur Village · Ward 4</div>
+          <div style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>Kodebod Village (Kurud) · Ward 4</div>
         </div>
         <button className="ge-btn ge-btn-primary" onClick={() => setPage("report")}><Sparkles size={15} /> Report a Problem</button>
       </div>
@@ -2823,7 +2840,7 @@ function MapPage({ complaints }) {
   return (
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "32px 24px 90px" }}>
       <div className="ge-serif" style={{ fontSize: 26, fontWeight: 600, marginBottom: 4 }}>Village Map</div>
-      <div style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 20 }}>Rampur Village — live issues by ward</div>
+      <div style={{ color: "var(--muted)", fontSize: 13.5, marginBottom: 20 }}>Kodebod Village (Kurud, Dhamtari) — live issues by ward</div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
         {["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map(s => (
@@ -2909,7 +2926,7 @@ function AdminDashboard({ complaints, setPage }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
         <div>
           <div className="ge-serif" style={{ fontSize: 26, fontWeight: 600 }}>Village Command Center</div>
-          <div style={{ color: "var(--muted)", fontSize: 13.5, marginTop: 4 }}>Rampur Village · Live overview</div>
+          <div style={{ color: "var(--muted)", fontSize: 13.5, marginTop: 4 }}>Kodebod Village (Kurud, Dhamtari) · Live overview</div>
         </div>
         <button className="ge-btn ge-btn-dark" onClick={() => setPage("adminComplaints")}>Manage Complaints <ArrowRight size={14} /></button>
       </div>
@@ -3219,7 +3236,7 @@ export default function GramEyeApp() {
         mobile: "6268814185",
         role: "citizen",
         ward: "Ward 4",
-        village: "Rampur",
+        village: "Kodebod",
         xp: 340
       };
     } catch {
@@ -3449,6 +3466,7 @@ export default function GramEyeApp() {
       {page === "report" && <ReportFlow complaints={complaints} addComplaint={addComplaint} setPage={setPage} setSelectedComplaint={setSelectedComplaint} addXp={addXp} lang={lang} />}
       {page === "complaintDetail" && <ComplaintDetail complaint={selectedComplaint} setPage={setPage} updateComplaint={updateComplaint} addXp={addXp} />}
       {page === "map" && <MapPage complaints={complaints} />}
+      {page === "kodebod" && <LiveVillageKodebod onNavigateReport={() => setPage("report")} onNavigateKisan={() => setPage("kisanPortal")} />}
       {page === "noticeBoard" && <NoticeBoard currentUser={currentUser} role={role} addXp={addXp} lang={lang} />}
       {page === "kisanPortal" && <KisanPortal addXp={addXp} />}
       {page === "certificates" && <CertificatePortal currentUser={currentUser} addXp={addXp} />}

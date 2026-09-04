@@ -14,7 +14,7 @@ const INITIAL_NOTICES = [
     date: "03 सितंबर 2026",
     priority: "HIGH",
     author: "रामेश्वर पटेल (सरपंच) व डॉ. सुरेश वर्मा (BMO)",
-    description: "ग्राम पंचायत रामपुर के समस्त नागरिकों को सूचित किया जाता है कि इस रविवार सुबह 9:00 बजे से दोपहर 3:00 बजे तक वार्ड 4 स्थित प्राथमिक स्वास्थ्य केंद्र में निःशुल्क स्वास्थ्य शिविर आयोजित किया जा रहा है। इसमें सिकल सेल जांच, बीपी, शुगर, मोतियाबिंद की जांच तथा आवश्यक दवाएं पूर्णतः निःशुल्क वितरित की जाएंगी। सभी ग्रामवासी इसका लाभ उठाएं।",
+    description: "ग्राम पंचायत कोड़ेबोड के समस्त नागरिकों को सूचित किया जाता है कि इस रविवार सुबह 9:00 बजे से दोपहर 3:00 बजे तक वार्ड 4 स्थित प्राथमिक स्वास्थ्य केंद्र में निःशुल्क स्वास्थ्य शिविर आयोजित किया जा रहा है। इसमें सिकल सेल जांच, बीपी, शुगर, मोतियाबिंद की जांच तथा आवश्यक दवाएं पूर्णतः निःशुल्क वितरित की जाएंगी। सभी ग्रामवासी इसका लाभ उठाएं।",
     attachment: "Swasthya_Shivir_Circular_Sep2026.pdf",
     reactions: {
       thumbsUp: 48,
@@ -53,7 +53,7 @@ const INITIAL_NOTICES = [
     dept: "लोक स्वास्थ्य यांत्रिकी विभाग (PHE)",
     date: "02 सितंबर 2026",
     priority: "ALERT",
-    author: "ग्राम पंचायत सचिव, रामपुर",
+    author: "ग्राम पंचायत सचिव, कोड़ेबोड",
     description: "वार्ड 1 से वार्ड 6 तक के सभी नागरिकों को सूचित किया जाता है कि बरसात उपरांत जल जनित रोगों की रोकथाम हेतु 50,000 लीटर क्षमता वाली मुख्य टंकी और ब्लीचिंग क्लोरीनेशन का कार्य शुक्रवार को किया जाएगा। अतः सुबह 6:00 से दोपहर 12:00 बजे तक नलों में पानी की सप्लाई बंद रहेगी। कृपया पूर्व दिवस में ही पेयजल सुरक्षित कर लें।",
     attachment: "Water_Tank_Maintenance_Order.pdf",
     reactions: {
@@ -295,7 +295,7 @@ export default function NoticeBoard({ currentUser, role, addXp, lang = "hi" }) {
       dept: nDept,
       date: new Date().toLocaleDateString("hi-IN", { day: "2-digit", month: "long", year: "numeric" }),
       priority: nPriority,
-      author: role === "admin" ? "रामेश्वर पटेल (सरपंच), ग्राम पंचायत रामपुर" : "पंचायत सूचना प्रकोष्ठ",
+      author: role === "admin" ? "रामेश्वर पटेल (सरपंच), ग्राम पंचायत कोड़ेबोड" : "पंचायत सूचना प्रकोष्ठ",
       description: nDesc.trim(),
       attachment: nFile ? nFile.name || "Panchayat_Aadhes_Notice.pdf" : "Official_Panchayat_Letter.pdf",
       reactions: { thumbsUp: 1, heart: 1, namaste: 1, bulb: 1, alert: 0 },
@@ -389,7 +389,7 @@ export default function NoticeBoard({ currentUser, role, addXp, lang = "hi" }) {
                 ग्राम पंचायत नोटिस बोर्ड व योजना पोलिंग
               </div>
               <div style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 2 }}>
-                Digital Panchayat Notice Board & Scheme Polling Booth — Gram Panchayat Rampur (धमतरी)
+                Digital Panchayat Notice Board & Scheme Polling Booth — Gram Panchayat Kodebod (धमतरी)
               </div>
             </div>
           </div>

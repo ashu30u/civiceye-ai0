@@ -40,7 +40,7 @@ export default function WorkOrderModal({
     "Education": "Panchayat Infrastructure Works Committee",
     "Healthcare": "Block Medical Maintenance Wing, Dhamtari",
     "Transport": "Zila Parishad Rural Transport Cell",
-    "Environment": "Van Sanrakshan Samiti, Rampur"
+    "Environment": "Van Sanrakshan Samiti, Kodebod"
   }[complaint.dept] || "Authorized Panchayat Field Crew";
 
   const handlePrint = () => {
@@ -227,10 +227,10 @@ export default function WorkOrderModal({
                   margin: "4px 0"
                 }}
               >
-                कार्यालय ग्राम पंचायत रामपुर (कुटुंब विकास प्रभाग)
+                कार्यालय ग्राम पंचायत कोड़ेबोड (कुटुंब विकास प्रभाग)
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#3C4E43" }}>
-                OFFICE OF THE GRAM PANCHAYAT RAMPUR, TEHSIL KURUD, DISTT DHAMTARI (C.G.)
+                OFFICE OF THE GRAM PANCHAYAT KODEBOD, TEHSIL KURUD, DISTT DHAMTARI (C.G.)
               </div>
               <div style={{ fontSize: 11, color: "#6A7C70", marginTop: 2 }}>
                 Digital Governance Portal: GramEye AI (Civic Redressal & Engineering Cell) • PIN: 493663
@@ -276,7 +276,7 @@ export default function WorkOrderModal({
           <div style={{ fontSize: 13, marginBottom: 18, lineHeight: 1.6 }}>
             <b>सेवा में (To):</b><br />
             <b>{contractorAssigned}</b><br />
-            संबद्ध विभाग: <b>{complaint.dept}</b>, ग्राम पंचायत रामपुर
+            संबद्ध विभाग: <b>{complaint.dept}</b>, ग्राम पंचायत कोड़ेबोड
           </div>
 
           <p style={{ fontSize: 13, textAlign: "justify", marginBottom: 18 }}>
@@ -376,7 +376,7 @@ export default function WorkOrderModal({
                 सरपंच / Sarpanch & सचिव / Secretary
               </div>
               <div style={{ fontSize: 10.5, color: "#7C9184" }}>
-                ग्राम पंचायत रामपुर, जिला धमतरी (छ.ग.)
+                ग्राम पंचायत कोड़ेबोड, जिला धमतरी (छ.ग.)
               </div>
             </div>
           </div>

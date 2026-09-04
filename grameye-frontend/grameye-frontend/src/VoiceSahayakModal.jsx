@@ -61,8 +61,8 @@ export default function VoiceSahayakModal({
 
     if (q.includes("बजट") || q.includes("budget") || q.includes("निधि") || q.includes("paisa") || q.includes("kharch")) {
       reply = lang === "hi"
-        ? "ग्राम पंचायत रामपुर का कुल स्वीकृत बजट ₹48.50 लाख है। इसमें से ₹32.15 लाख सड़कों और जल आपूर्ति पर खर्च हो चुके हैं और ₹9.54 लाख शेष हैं। आप ग्राम निधि टैब में सभी बिल देख सकते हैं!"
-        : "The total sanctioned budget for Gram Panchayat Rampur is ₹48.50 Lakh. ₹32.15 Lakh has been utilized with ₹9.54 Lakh remaining. Check the Gram Nidhi tab for all itemized bills!";
+        ? "ग्राम पंचायत कोड़ेबोड का कुल स्वीकृत बजट ₹48.50 लाख है। इसमें से ₹32.15 लाख सड़कों और जल आपूर्ति पर खर्च हो चुके हैं और ₹9.54 लाख शेष हैं। आप ग्राम निधि टैब में सभी बिल देख सकते हैं!"
+        : "The total sanctioned budget for Gram Panchayat Kodebod is ₹48.50 Lakh. ₹32.15 Lakh has been utilized with ₹9.54 Lakh remaining. Check the Gram Nidhi tab for all itemized bills!";
     } else if (q.includes("पानी") || q.includes("water") || q.includes("नल") || q.includes("pipe")) {
       reply = lang === "hi"
         ? "वार्ड 2 और 4 में पेयजल मरम्मत कार्य जल जीवन मिशन के तहत चल रहा है। यदि आपके घर नल नहीं आ रहा, तो तुरंत 'Report' बटन दबाकर AI फोटो अपलोड करें!"
@@ -81,7 +81,7 @@ export default function VoiceSahayakModal({
         : "Reporting is super simple! Go to 'Report', take a photo and speak. AI vision will auto-detect the hazard and notify the Panchayat!";
     } else {
       reply = lang === "hi"
-        ? `मैंने आपका प्रश्न समझ लिया: "${userQuery}"। आप ग्राम पंचायत रामपुर के इस AI पोर्टल पर शिकायत दर्ज कर सकते हैं, ग्राम निधि का बजट देख सकते हैं या ग्राम सभा में वोट कर सकते हैं।`
+        ? `मैंने आपका प्रश्न समझ लिया: "${userQuery}"। आप ग्राम पंचायत कोड़ेबोड के इस AI पोर्टल पर शिकायत दर्ज कर सकते हैं, ग्राम निधि का बजट देख सकते हैं या ग्राम सभा में वोट कर सकते हैं।`
         : `I noted your query: "${userQuery}". You can file complaints with AI vision, inspect public funds in Gram Nidhi, or participate in Gram Sabha voting.`;
     }
 

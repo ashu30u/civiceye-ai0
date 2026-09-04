@@ -215,7 +215,7 @@ export default function EmergencyAlertModal({
                 ग्राम पंचायत आपातकालीन आपदा सायरन अलर्ट
               </div>
               <div style={{ fontSize: 11, color: "#FFB0B0" }}>
-                EMERGENCY DISASTER BROADCAST • GRAM PANCHAYAT RAMPUR
+                EMERGENCY DISASTER BROADCAST • GRAM PANCHAYAT KODEBOD
               </div>
             </div>
           </div>
@@ -393,7 +393,7 @@ export default function EmergencyAlertModal({
           }}
         >
           <div style={{ fontSize: 11.5, color: "#8E7272" }}>
-            कंट्रोल रूम: ग्राम पंचायत भवन, रामपुर • 24x7 अलर्ट एक्टिव
+            कंट्रोल रूम: ग्राम पंचायत भवन, कोड़ेबोड • 24x7 अलर्ट एक्टिव
           </div>
 
           <button
