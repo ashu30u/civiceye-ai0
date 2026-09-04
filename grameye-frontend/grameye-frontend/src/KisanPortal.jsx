@@ -7,6 +7,7 @@ import {
   Paperclip, FileText, Image as ImageIcon, Send, Clock,
   HelpCircle, MessageCircle, ChevronDown, ChevronUp, DollarSign
 } from "lucide-react";
+import { identifyCropDisease, CROP_DIAGNOSES as EXTENDED_DIAGNOSES } from "./cropDoctorData.js";
 
 // Mandi Rates for Kurud / Dhamtari APMC
 const MANDI_RATES = [
@@ -629,45 +630,34 @@ export default function KisanPortal({ addXp }) {
   };
 
   // Run AI Multimodal Diagnosis Pipeline
-  const runAiAnalysis = (forcedDiagnosisKey) => {
+  const runAiAnalysis = (forcedDiagnosisKey, overrideQueryText) => {
+    const activeQuery = overrideQueryText !== undefined ? overrideQueryText : textQuery;
+    if (overrideQueryText !== undefined) {
+      setTextQuery(overrideQueryText);
+    }
+
     setAnalyzing(true);
-    setAnalysisStep("📸 छवि व ऑडियो स्पेक्ट्रम का विश्लेषण (Visual & Acoustic Neural Analysis)...");
+    setAnalysisStep("📸 छवि, ऑडियो स्पेक्ट्रम व लक्षणों का विश्लेषण (Neural Diagnostic Engine)...");
 
     setTimeout(() => {
-      setAnalysisStep("🌾 ICAR व राष्ट्रीय पौध संरक्षण संस्थान (NIPHM) पैथोलॉजी डेटाबेस से मिलान...");
-    }, 800);
+      setAnalysisStep("🌾 ICAR व NIPHM राष्ट्रीय पौध संरक्षण डेटाबेस से सटीक रोग मिलान...");
+    }, 700);
 
     setTimeout(() => {
-      setAnalysisStep("💊 रोग का कारण, दवा की सही खुराक व 14-दिवसीय रोडमैप तैयार हो रहा है...");
-    }, 1500);
+      setAnalysisStep("💊 रोग का सटीक कारण, दवा की खुराक व सम्पूर्ण 14-दिवसीय रोडमैप तैयार हो रहा है...");
+    }, 1400);
 
     setTimeout(() => {
       setAnalyzing(false);
 
-      let resultKey = forcedDiagnosisKey;
-      if (!resultKey) {
-        const query = (textQuery + " " + voiceTranscript).toLowerCase();
-        if (query.includes("चना") || query.includes("फली") || query.includes("इल्ली")) {
-          resultKey = "pod_borer";
-        } else if (query.includes("पीला") || query.includes("सोयाबीन") || query.includes("मोज़ेक")) {
-          resultKey = "mosaic";
-        } else if (query.includes("गोभ") || query.includes("सफेद बाली") || query.includes("तना छेदक") || query.includes("सूख")) {
-          resultKey = "stem_borer";
-        } else if (query.includes("स्वस्थ") || query.includes("बढ़िया") || query.includes("हरा") || query.includes("निरोग")) {
-          resultKey = "healthy";
-        } else {
-          resultKey = "blast";
-        }
-      }
-
-      const found = CROP_DIAGNOSES[resultKey] || CROP_DIAGNOSES.blast;
+      const found = identifyCropDisease(activeQuery, voiceTranscript, forcedDiagnosisKey);
       setDiagnosisResult(found);
       setSelectedFaq(null);
       setCustomFaqAnswer(null);
 
       if (addXp) addXp(20);
       showToast(`🌱 सम्पूर्ण फसल रिपोर्ट तैयार: ${found.diseaseHindi} (+20 XP)`);
-    }, 2200);
+    }, 2000);
   };
 
   // Speak Prescription in Hindi using SpeechSynthesis
@@ -851,10 +841,15 @@ export default function KisanPortal({ addXp }) {
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <span style={{ fontSize: 11.5, color: "var(--muted)", fontWeight: 700 }}>डेमो चुनें:</span>
             {[
+              { key: "excess_nitrogen", label: "धान ज्यादा हरी (यूरिया)" },
+              { key: "khaira", label: "धान खैरा (जिंक कमी)" },
               { key: "blast", label: "धान झुलसा" },
               { key: "stem_borer", label: "तना छेदक" },
+              { key: "sheath_blight", label: "शीथ ब्लाइट" },
+              { key: "bph", label: "भूरा माहू" },
               { key: "pod_borer", label: "चना इल्ली" },
               { key: "mosaic", label: "सोयाबीन मोज़ेक" },
+              { key: "leaf_curl", label: "मिर्च पत्ता मरोड़" },
               { key: "healthy", label: "स्वस्थ फसल" }
             ].map((p) => (
               <button
@@ -1186,17 +1181,19 @@ export default function KisanPortal({ addXp }) {
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
                 <span style={{ fontSize: 11, color: "var(--muted)", alignSelf: "center" }}>सुझाव:</span>
                 {[
-                  "धान की गोभ सूख रही है",
+                  "dhan ki fasl jyada hari color ho gayi hai",
+                  "धान में खैरा रोग व कत्थई धब्बे (जिंक कमी)",
+                  "धान की गोभ सूख रही है व तना छेदक",
                   "चने की फली में छेद व इल्ली",
                   "सोयाबीन में पीला मोज़ेक वायरस",
-                  "पत्ती पर आंख के आकार के भूरे धब्बे"
+                  "पत्ती पर आंख के आकार के भूरे धब्बे (झुलसा)",
+                  "मिर्च व टमाटर में पत्ता मरोड़ रोग"
                 ].map((chip, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => {
-                      setTextQuery(chip);
-                      runAiAnalysis();
+                      runAiAnalysis(null, chip);
                     }}
                     style={{
                       background: "rgba(14,26,19,0.04)",
