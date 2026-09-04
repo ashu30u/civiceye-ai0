@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm --prefix grameye-frontend/grameye-frontend run build",
+  "outputDirectory": "grameye-frontend/grameye-frontend/dist",
+  "installCommand": "npm --prefix grameye-frontend/grameye-frontend install",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

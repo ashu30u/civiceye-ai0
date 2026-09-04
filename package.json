@@ -1,0 +1,9 @@
+{
+  "name": "grameye-ai",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix grameye-frontend/grameye-frontend run build",
+    "install": "npm --prefix grameye-frontend/grameye-frontend install"
+  }
+}
