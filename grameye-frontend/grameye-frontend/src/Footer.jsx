@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   MapPin, Phone, Mail, Globe, MessageSquare, Send, X, Sparkles,
   ChevronRight, Clock, ShieldCheck, Camera, Zap, Award, CheckCircle2,
-  ExternalLink, Bot, ArrowUpRight
+  ExternalLink, Bot, ArrowUpRight, Mic
 } from "lucide-react";
 
 /* Modern Social SVG Icons matching professional footer standards */
@@ -44,7 +44,7 @@ const SocialIcons = {
   )
 };
 
-export default function Footer({ setPage }) {
+export default function Footer({ setPage, onOpenVoiceSahayak }) {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState([
@@ -209,36 +209,71 @@ export default function Footer({ setPage }) {
           box-shadow: 0 16px 36px -6px rgba(232, 163, 61, 0.75);
           background: linear-gradient(135deg, #F4C374 0%, #E8A33D 100%);
         }
-        .ge-floating-chat-trigger {
+        .ge-floating-ai-dock {
           position: fixed;
           bottom: 24px;
           right: 24px;
           z-index: 99;
           display: flex;
           align-items: center;
-          gap: 10px;
-          background: #0F2317;
-          border: 1px solid rgba(232, 163, 61, 0.4);
-          padding: 6px 16px 6px 6px;
+          background: rgba(15, 35, 23, 0.95);
+          border: 1.5px solid rgba(232, 163, 61, 0.5);
+          padding: 4px 6px;
+          border-radius: 999px;
+          box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55);
+          backdrop-filter: blur(10px);
+          gap: 4px;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ge-floating-ai-dock:hover {
+          border-color: #E8A33D;
+          box-shadow: 0 16px 40px rgba(232, 163, 61, 0.35);
+          transform: translateY(-2px);
+        }
+        .ge-dock-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: transparent;
+          border: none;
+          color: #FBF8F0;
+          padding: 5px 12px 5px 6px;
           border-radius: 999px;
           cursor: pointer;
-          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-          transition: all 0.25s ease;
+          font-family: inherit;
+          font-size: 12.5px;
+          font-weight: 700;
+          transition: all 0.15s ease;
         }
-        .ge-floating-chat-trigger:hover {
-          transform: translateY(-3px);
-          border-color: #E8A33D;
-          box-shadow: 0 16px 34px rgba(232, 163, 61, 0.3);
+        .ge-dock-btn:hover {
+          background: rgba(255, 255, 255, 0.12);
+        }
+        .ge-dock-btn-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 999px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .ge-dock-divider {
+          width: 1px;
+          height: 20px;
+          background: rgba(255, 255, 255, 0.2);
         }
         @media (max-width: 640px) {
-          .ge-floating-chat-trigger {
+          .ge-floating-ai-dock {
             bottom: 68px;
-            right: 14px;
-            padding: 4px;
-            border-radius: 999px;
-            gap: 0;
+            right: 12px;
+            padding: 3px 4px;
+            gap: 2px;
           }
-          .ge-floating-chat-trigger span {
+          .ge-dock-btn {
+            padding: 3px;
+          }
+          .ge-dock-btn span {
             display: none !important;
           }
         }
@@ -713,28 +748,54 @@ export default function Footer({ setPage }) {
         </div>
       </footer>
 
-      {/* Floating "Chat with GramEye AI" Pill Button (matches the screenshot bottom-right widget) */}
-      <div
-        className="ge-floating-chat-trigger"
-        onClick={() => setChatOpen(!chatOpen)}
-      >
-        <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 99,
-            background: "linear-gradient(135deg, #E8A33D 0%, #1F4D36 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 0 12px rgba(232, 163, 61, 0.6)"
+      {/* Unified Floating AI Assistant Dock (Voice Sahayak + Chat with GramEye AI - Zero Overlap) */}
+      <div className="ge-floating-ai-dock" role="region" aria-label="GramEye AI Quick Assistants">
+        {/* 1. Voice Sahayak Trigger Button */}
+        <button
+          type="button"
+          className="ge-dock-btn"
+          onClick={() => {
+            if (onOpenVoiceSahayak) onOpenVoiceSahayak();
           }}
+          title="AI Voice Sahayak (बोलकर सवाल पूछें)"
         >
-          <Bot size={20} color="#FBF8F0" />
-        </div>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#FBF8F0", whiteSpace: "nowrap" }}>
-          Chat with GramEye AI
-        </span>
+          <div
+            className="ge-dock-btn-icon"
+            style={{
+              background: "var(--turmeric)",
+              boxShadow: "0 0 10px rgba(232, 163, 61, 0.55)"
+            }}
+          >
+            <Mic size={16} color="#231402" />
+          </div>
+          <span style={{ fontSize: 12.5, fontWeight: 800, color: "#FBF8F0", whiteSpace: "nowrap" }}>
+            AI बोलें
+          </span>
+        </button>
+
+        {/* Separator Divider */}
+        <div className="ge-dock-divider" />
+
+        {/* 2. Text Chatbot Trigger Button */}
+        <button
+          type="button"
+          className="ge-dock-btn"
+          onClick={() => setChatOpen(!chatOpen)}
+          title="Chat with GramEye AI"
+        >
+          <div
+            className="ge-dock-btn-icon"
+            style={{
+              background: "linear-gradient(135deg, #E8A33D 0%, #1F4D36 100%)",
+              boxShadow: "0 0 10px rgba(232, 163, 61, 0.45)"
+            }}
+          >
+            <Bot size={17} color="#FBF8F0" />
+          </div>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: "#FBF8F0", whiteSpace: "nowrap" }}>
+            Chat with GramEye AI
+          </span>
+        </button>
       </div>
 
       {/* Interactive AI Chatbot Drawer/Modal */}

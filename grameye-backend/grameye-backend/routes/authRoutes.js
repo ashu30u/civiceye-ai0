@@ -90,17 +90,27 @@ router.post("/send-otp", (req, res) => {
 // POST /api/auth/verify-otp
 router.post("/verify-otp", async (req, res) => {
   try {
-    const { mobile, otp, fullName, ward, role } = req.body;
+    const { mobile, otp, fullName, ward, role, adminPassword } = req.body;
     if (!mobile || !otp) {
       return res.status(400).json({ message: "Mobile number and OTP are required" });
     }
     const cleanMobile = mobile.replace(/\D/g, "").slice(-10);
     const stored = otpStore.get(cleanMobile);
 
-    // Allow master test OTP '4829' or verified stored OTP
-    const isValid = otp === "4829" || (stored && stored.otp === otp && stored.expiresAt > Date.now());
+    // Allow verified stored OTP or fallback test OTP '4829'
+    const isValid = (stored && stored.otp === otp && stored.expiresAt > Date.now()) || otp === "4829";
     if (!isValid) {
-      return res.status(401).json({ message: "Invalid or expired OTP. Please try again." });
+      return res.status(401).json({ message: "❌ गलत ओटीपी (Wrong OTP)! Please enter the correct 4-digit code." });
+    }
+
+    // Strictly enforce admin password amit@123 if role is ADMIN
+    if (role === "ADMIN") {
+      const cleanPass = (adminPassword || "").trim().toLowerCase();
+      if (cleanPass !== "amit@123") {
+        return res.status(403).json({
+          message: "❌ गलत एडमिन पासवर्ड (Wrong Password)! Admin password 'amit@123' is required for Panchayat Admin."
+        });
+      }
     }
 
     // Check if user exists with this mobile
@@ -112,16 +122,21 @@ router.post("/verify-otp", async (req, res) => {
       const dummyEmail = `${cleanMobile}@grameye.in`;
       const randomPassword = await bcrypt.hash("GramEye@" + cleanMobile, 10);
       user = await User.create({
-        fullName: fullName || "Gram Citizen (" + cleanMobile.slice(-4) + ")",
+        fullName: fullName || (role === "ADMIN" ? "Panchayat Admin" : "Gram Citizen (" + cleanMobile.slice(-4) + ")"),
         email: dummyEmail,
         mobile: cleanMobile,
         password: randomPassword,
         role: role === "ADMIN" ? "ADMIN" : "CITIZEN",
-        xp: 100, // starting welcome bonus
-        badges: ["New Citizen"],
+        xp: role === "ADMIN" ? 500 : 100,
+        badges: role === "ADMIN" ? ["Panchayat Admin"] : ["New Citizen"],
       });
-    } else if (fullName && user.fullName.startsWith("Gram Citizen")) {
-      user.fullName = fullName;
+    } else {
+      if (role === "ADMIN") {
+        user.role = "ADMIN";
+      }
+      if (fullName && user.fullName.startsWith("Gram Citizen")) {
+        user.fullName = fullName;
+      }
       await user.save();
     }
 

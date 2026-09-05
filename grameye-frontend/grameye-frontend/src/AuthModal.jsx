@@ -25,6 +25,7 @@ export default function AuthModal({
   const [fullName, setFullName] = useState("");
   const [ward, setWard] = useState("Ward 3");
   const [selectedRole, setSelectedRole] = useState("citizen");
+  const [adminPassword, setAdminPassword] = useState("");
 
   // Email / Password mode fields
   const [email, setEmail] = useState("");
@@ -124,6 +125,13 @@ export default function AuthModal({
     setLoading(true);
     setError("");
 
+    // Client-side strict check: Entered OTP must match sentOtp (or master fallback 4829)
+    if (sentOtp && enteredOtp !== sentOtp && enteredOtp !== "4829") {
+      setLoading(false);
+      setError(lang === "hi" ? "❌ गलत ओटीपी (Wrong OTP)! कृपया अपने मोबाइल पर आया सही 4-अंकीय कोड दर्ज करें।" : "❌ Wrong OTP! Please enter the correct 4-digit code sent to your mobile.");
+      return;
+    }
+
     try {
       let isNew = false;
       let userData = null;
@@ -137,7 +145,8 @@ export default function AuthModal({
             otp: enteredOtp,
             fullName: fullName || "Gram Citizen",
             ward,
-            role: selectedRole === "admin" ? "ADMIN" : "CITIZEN"
+            role: selectedRole === "admin" ? "ADMIN" : "CITIZEN",
+            adminPassword
           })
         });
         if (res.ok) {
@@ -149,18 +158,28 @@ export default function AuthModal({
           throw new Error(errData.message || "Invalid OTP");
         }
       } catch (backendErr) {
-        // Standalone verification fallback
-        if (enteredOtp !== "4829" && enteredOtp !== sentOtp) {
-          throw new Error(lang === "hi" ? "अमान्य ओटीपी। कृपया 4829 दर्ज करें।" : "Invalid OTP. Please enter 4829.");
+        // Fallback check
+        if (enteredOtp !== sentOtp && enteredOtp !== "4829") {
+          throw new Error(lang === "hi" ? "❌ गलत ओटीपी (Wrong OTP)! कृपया अपने मोबाइल पर आया सही कोड दर्ज करें।" : "❌ Wrong OTP! Please enter the correct verification code.");
         }
         isNew = true;
       }
 
-      if (isNew && !fullName) {
-        // Let user quickly confirm their name and ward
+      // Always proceed to profile setup to confirm name, ward & role/password
+      if (isNew || !fullName) {
         setStep("profile");
         setLoading(false);
         return;
+      }
+
+      // If user selected admin, strictly enforce password amit@123
+      if (selectedRole === "admin") {
+        if (!adminPassword.trim() || adminPassword.trim().toLowerCase() !== "amit@123") {
+          setStep("profile");
+          setError(lang === "hi" ? "❌ गलत एडमिन पासवर्ड (Wrong Password)! पंचायत एडमिन के लिए पासवर्ड 'amit@123' अनिवार्य है।" : "❌ Wrong Admin Password! Password 'amit@123' is required for Panchayat Admin.");
+          setLoading(false);
+          return;
+        }
       }
 
       // Complete login
@@ -171,7 +190,7 @@ export default function AuthModal({
         role: selectedRole === "admin" ? "admin" : "citizen",
         ward: ward || "Ward 3",
         village: "Kodebod",
-        xp: 340
+        xp: selectedRole === "admin" ? 500 : 340
       };
 
       if (onLoginSuccess) {
@@ -187,14 +206,28 @@ export default function AuthModal({
 
   // Complete Profile for New User
   const handleCompleteProfile = () => {
+    setError("");
+
+    // If Admin role is selected, validate password amit@123
+    if (selectedRole === "admin") {
+      if (!adminPassword.trim()) {
+        setError(lang === "hi" ? "❌ कृपया पंचायत एडमिन पासवर्ड दर्ज करें!" : "❌ Please enter Panchayat Admin password!");
+        return;
+      }
+      if (adminPassword.trim().toLowerCase() !== "amit@123") {
+        setError(lang === "hi" ? "❌ गलत एडमिन पासवर्ड (Wrong Password)! कृपया सही पासवर्ड 'amit@123' दर्ज करें।" : "❌ Wrong Admin Password! Please enter valid password 'amit@123'.");
+        return;
+      }
+    }
+
     const finalUser = {
       id: `usr-${Date.now().toString().slice(-4)}`,
-      fullName: fullName.trim() || "Citizen of Kodebod",
+      fullName: fullName.trim() || (selectedRole === "admin" ? "Panchayat Admin" : "Citizen of Kodebod"),
       mobile: mobile.slice(-10) || "6268814185",
       role: selectedRole === "admin" ? "admin" : "citizen",
       ward: ward || "Ward 3",
       village: "Kodebod",
-      xp: 150 // Welcome bonus
+      xp: selectedRole === "admin" ? 500 : 150
     };
 
     if (onLoginSuccess) {
@@ -723,24 +756,62 @@ export default function AuthModal({
                   ))}
                 </div>
 
-                {/* WhatsApp OTP Delivery option */}
-                <div style={{ textAlign: "center", marginBottom: 14 }}>
-                  <a
-                    href={`https://wa.me/91${(mobile || "6268814185").slice(-10)}?text=Your%20GramEye%20AI%20Login%20Verification%20OTP%20code%20is%20${sentOtp || "4829"}.`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize: 12,
-                      color: "#25D366",
-                      fontWeight: 700,
-                      textDecoration: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6
-                    }}
-                  >
-                    <span>💬 Receive this OTP on WhatsApp (+91 {(mobile || "6268814185").slice(-10)})</span>
-                  </a>
+                {/* Mobile Notification & Dispatch Channels */}
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  marginBottom: 16,
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  background: "#F4F7F5",
+                  border: "1px solid rgba(31,77,54,0.15)"
+                }}>
+                  <div style={{ fontSize: 12, color: "var(--ink-text)", fontWeight: 600, textAlign: "center" }}>
+                    📲 {lang === "hi"
+                      ? `ओटीपी आपके मोबाइल नंबर +91 ${(mobile || "6268814185").slice(-10)} पर भेजा गया है।`
+                      : `OTP has been dispatched to +91 ${(mobile || "6268814185").slice(-10)}.`}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                    <a
+                      href={`sms:+91${(mobile || "6268814185").slice(-10)}?body=Your%20GramEye%20AI%20OTP%20is%20${sentOtp || "4829"}`}
+                      style={{
+                        fontSize: 11.5,
+                        color: "var(--paddy)",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                        padding: "5px 10px",
+                        background: "#fff",
+                        border: "1px solid var(--paddy)",
+                        borderRadius: 8,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5
+                      }}
+                    >
+                      <span>📩 मोबाइल SMS खोलें (View SMS)</span>
+                    </a>
+                    <a
+                      href={`https://wa.me/91${(mobile || "6268814185").slice(-10)}?text=Your%20GramEye%20AI%20Login%20Verification%20OTP%20code%20is%20${sentOtp || "4829"}.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: 11.5,
+                        color: "#1E7E34",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                        padding: "5px 10px",
+                        background: "#EAF8EF",
+                        border: "1px solid #25D366",
+                        borderRadius: 8,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5
+                      }}
+                    >
+                      <span>💬 WhatsApp पर OTP</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Resend & Change Mobile */}
@@ -856,7 +927,10 @@ export default function AuthModal({
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       type="button"
-                      onClick={() => setSelectedRole("citizen")}
+                      onClick={() => {
+                        setSelectedRole("citizen");
+                        setError("");
+                      }}
                       style={{
                         flex: 1,
                         padding: "10px 8px",
@@ -872,7 +946,10 @@ export default function AuthModal({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setSelectedRole("admin")}
+                      onClick={() => {
+                        setSelectedRole("admin");
+                        setError("");
+                      }}
                       style={{
                         flex: 1,
                         padding: "10px 8px",
@@ -887,6 +964,48 @@ export default function AuthModal({
                       🛡️ Panchayat Admin
                     </button>
                   </div>
+
+                  {/* Admin Password Requirement Box */}
+                  {selectedRole === "admin" && (
+                    <div style={{
+                      marginTop: 14,
+                      background: "#FFFBF2",
+                      padding: "14px 16px",
+                      borderRadius: 14,
+                      border: "1.5px solid var(--turmeric)",
+                      animation: "geFadeUp 0.2s ease-out"
+                    }}>
+                      <label style={{ fontSize: 12.5, fontWeight: 800, color: "#8B5E34", display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                        <Lock size={15} color="#8B5E34" />
+                        {lang === "hi" ? "पंचायत एडमिन सुरक्षा पासवर्ड दर्ज करें *" : "Panchayat Admin Security Password *"}
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Enter admin password (e.g. amit@123)"
+                        value={adminPassword}
+                        onChange={(e) => {
+                          setAdminPassword(e.target.value);
+                          setError("");
+                        }}
+                        style={{
+                          width: "100%",
+                          borderRadius: 10,
+                          border: "1.5px solid rgba(139,94,52,0.3)",
+                          padding: "11px 14px",
+                          fontSize: 14,
+                          outline: "none",
+                          background: "#fff",
+                          boxSizing: "border-box",
+                          fontWeight: 600,
+                          letterSpacing: "0.05em"
+                        }}
+                        autoFocus
+                      />
+                      <div style={{ fontSize: 11.5, color: "#8B5E34", marginTop: 6, lineHeight: 1.4, fontWeight: 600 }}>
+                        🔒 {lang === "hi" ? "सुरक्षा नियम: केवल अधिकृत पंचायत अधिकारियों के लिए पासवर्ड 'amit@123' मान्य है।" : "Security Rule: Password 'amit@123' is required to access Panchayat Admin privileges."}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -949,13 +1068,25 @@ export default function AuthModal({
                   type="button"
                   className="ge-btn ge-btn-primary"
                   style={{ width: "100%", padding: "13px", fontSize: 14, marginBottom: 14 }}
-                  onClick={() => handleQuickDemoLogin("citizen")}
+                  onClick={() => {
+                    setError("");
+                    const isAdminAttempt = email.toLowerCase().includes("admin") || email.toLowerCase().includes("sarpanch");
+                    if (isAdminAttempt) {
+                      if (password.trim().toLowerCase() !== "amit@123") {
+                        setError(lang === "hi" ? "❌ गलत एडमिन पासवर्ड (Wrong Password)! पंचायत एडमिन पासवर्ड 'amit@123' है।" : "❌ Wrong Admin Password! Admin password is 'amit@123'.");
+                        return;
+                      }
+                      handleQuickDemoLogin("admin");
+                    } else {
+                      handleQuickDemoLogin("citizen");
+                    }
+                  }}
                 >
                   Sign In with Password
                 </button>
 
                 <div style={{ fontSize: 12, color: "var(--muted)", textAlign: "center", marginBottom: 10 }}>
-                  Or use instant one-click demo credentials:
+                  Or test with verified demo roles:
                 </div>
 
                 <div style={{ display: "flex", gap: 8 }}>
@@ -971,9 +1102,17 @@ export default function AuthModal({
                     type="button"
                     className="ge-btn ge-btn-ghost"
                     style={{ flex: 1, padding: "8px", fontSize: 12 }}
-                    onClick={() => handleQuickDemoLogin("admin")}
+                    onClick={() => {
+                      // Demo Admin requires amit@123 verification check
+                      if (password.trim().toLowerCase() === "amit@123") {
+                        handleQuickDemoLogin("admin");
+                      } else {
+                        setPassword("amit@123");
+                        setError(lang === "hi" ? "🔑 एडमिन पासवर्ड 'amit@123' सेट किया गया। अब साइन इन करें।" : "🔑 Admin password 'amit@123' prefilled. Click sign in.");
+                      }
+                    }}
                   >
-                    🛡️ Demo Admin
+                    🛡️ Demo Admin (amit@123)
                   </button>
                 </div>
               </div>

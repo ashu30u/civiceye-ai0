@@ -408,7 +408,7 @@ function VillageScene({ onExplore }) {
 function Navbar({
   page, setPage, lang, setLang, role, setRole, xp,
   currentUser, onOpenAuthModal, onOpenLogoutModal,
-  onOpenVoiceSahayak, onOpenEmergencyAlert
+  onOpenVoiceSahayak, onOpenEmergencyAlert, onOpenConnectProfile
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
@@ -419,14 +419,14 @@ function Navbar({
   const coreLinks = role === "citizen"
     ? [
         ["citizenDashboard", "Dashboard"],
-        ["coodenest", "🚀 Social Hub"],
+        ["coodenest", "🌐 GramConnect"],
         ["healthGuard", "🩺 HealthGuard"],
         ["smartWeather", "🌦️ Weather"],
         ["kisanPortal", "🌾 Kisan"]
       ]
     : [
         ["adminDashboard", "Command Center"],
-        ["coodenest", "🚀 Social Hub"],
+        ["coodenest", "🌐 GramConnect"],
         ["healthGuard", "🩺 HealthGuard"],
         ["adminComplaints", "Complaints"],
         ["kisanPortal", "🌾 Kisan"]
@@ -755,6 +755,35 @@ function Navbar({
                       type="button"
                       onClick={() => {
                         setProfileOpen(false);
+                        if (onOpenConnectProfile) {
+                          onOpenConnectProfile();
+                        } else {
+                          navigateTo("coodenest");
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: "rgba(31,77,54,0.1)",
+                        color: "var(--paddy)",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        marginBottom: 6
+                      }}
+                    >
+                      <User size={13} /> 👤 My Profile & Reels (मेरी प्रोफ़ाइल)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileOpen(false);
                         onOpenLogoutModal();
                       }}
                       style={{
@@ -881,6 +910,35 @@ function Navbar({
                       <div style={{ fontSize: 11, color: "var(--muted)" }}>📍 {currentUser.ward || "Ward 3"} • <span style={{ color: "var(--turmeric)", fontWeight: 700 }}>{xp} XP</span></div>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      if (onOpenConnectProfile) {
+                        onOpenConnectProfile();
+                      } else {
+                        navigateTo("coodenest");
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      padding: "8px 10px",
+                      borderRadius: 10,
+                      border: "1.5px solid var(--paddy)",
+                      background: "rgba(31,77,54,0.08)",
+                      color: "var(--paddy)",
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      marginTop: 10
+                    }}
+                  >
+                    <User size={14} /> 👤 My Profile & Reels (मेरी प्रोफ़ाइल)
+                  </button>
                 </div>
               ) : (
                 <div style={{ marginBottom: 12 }}>
@@ -952,7 +1010,7 @@ function Navbar({
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {[
                   ["citizenDashboard", "🏠 Dashboard (डैशबोर्ड)"],
-                  ["coodenest", "🚀 Coodenest Connect (सोशल हब)"],
+                  ["coodenest", "🌐 GramConnect (ग्राम कनेक्ट सोशल हब)"],
                   ["healthGuard", "🩺 HealthGuard AI (स्वास्थ्य व एम्बुलेंस)"],
                   ["smartWeather", "🌦️ Smart Weather AI (मौसम पूर्वानुमान)"],
                   ["myVillage", "🏡 My Village (मेरा गाँव डिजिटल हब)"],
@@ -3310,6 +3368,12 @@ export default function GramEyeApp() {
   const [voiceSahayakOpen, setVoiceSahayakOpen] = useState(false);
   const [emergencyAlertOpen, setEmergencyAlertOpen] = useState(false);
   const [authToast, setAuthToast] = useState(null);
+  const [connectInitialTab, setConnectInitialTab] = useState("feed");
+
+  const handleOpenMyProfile = () => {
+    setConnectInitialTab("profile");
+    setPage("coodenest");
+  };
 
   function handleLoginSuccess(user) {
     setCurrentUser(user);
@@ -3520,6 +3584,7 @@ export default function GramEyeApp() {
         onOpenLogoutModal={() => setLogoutModalOpen(true)}
         onOpenVoiceSahayak={() => setVoiceSahayakOpen(true)}
         onOpenEmergencyAlert={() => setEmergencyAlertOpen(true)}
+        onOpenConnectProfile={handleOpenMyProfile}
       />
 
       {page === "landing" && <Landing setPage={setPage} lang={lang} complaints={complaints} />}
@@ -3529,7 +3594,7 @@ export default function GramEyeApp() {
       {page === "map" && <MapPage complaints={complaints} />}
       {page === "kodebod" && <LiveVillageKodebod onNavigateReport={() => setPage("report")} onNavigateKisan={() => setPage("kisanPortal")} />}
       {page === "myVillage" && <MyVillageHub setPage={setPage} />}
-      {page === "coodenest" && <CoodenestConnect currentUser={currentUser} addXp={addXp} />}
+      {page === "coodenest" && <CoodenestConnect currentUser={currentUser} addXp={addXp} initialTab={connectInitialTab} />}
       {page === "healthGuard" && <HealthGuardAI />}
       {page === "smartWeather" && <SmartWeatherAI />}
       {page === "pashuDoctor" && <PashuDoctorAI />}
@@ -3546,52 +3611,13 @@ export default function GramEyeApp() {
       {page === "adminDashboard" && <AdminDashboard complaints={complaints} setPage={setPage} />}
       {page === "adminComplaints" && <AdminComplaints complaints={complaints} updateComplaint={updateComplaint} />}
 
-      <Footer setPage={setPage} />
+      <Footer
+        setPage={setPage}
+        onOpenVoiceSahayak={() => setVoiceSahayakOpen(true)}
+      />
 
       <div style={{ height: 60 }} className="ge-mobile-nav-spacer" />
       <MobileBottomNav page={page} setPage={setPage} role={role} />
-
-      {/* Floating AI Voice Sahayak Widget Button (Bottom Right) */}
-      <button
-        type="button"
-        className="ge-hide-sm"
-        onClick={() => setVoiceSahayakOpen(true)}
-        style={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-          zIndex: 70,
-          background: "linear-gradient(135deg, #0B1710 0%, #1F4D36 100%)",
-          color: "#FBF8F0",
-          border: "2px solid var(--turmeric)",
-          borderRadius: 999,
-          padding: "11px 18px",
-          boxShadow: "0 10px 32px rgba(0,0,0,0.45)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          cursor: "pointer",
-          fontWeight: 800,
-          fontSize: 13.5,
-          animation: "gePulseGlow 3s infinite"
-        }}
-        title="Open AI Voice Sahayak (बोलकर सवाल पूछें)"
-      >
-        <div
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 99,
-            background: "var(--turmeric)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <Mic size={16} color="#231402" />
-        </div>
-        <span>AI Voice Sahayak (बोलें)</span>
-      </button>
 
       {/* Interactive Phone + OTP Authentication Modal */}
       <AuthModal

@@ -3,11 +3,12 @@ import {
   Heart, MessageCircle, Share2, Bookmark, Sparkles, Send, Image as ImageIcon,
   Video, Compass, Film, MessageSquare, PlusSquare, User, TrendingUp, Trophy,
   Users, CheckCircle2, MoreHorizontal, X, Smile, Search, Filter, Flame,
-  Award, Play, Pause, Volume2, VolumeX, Eye, ArrowRight, Check, MapPin
+  Award, Play, Pause, Volume2, VolumeX, Eye, ArrowRight, Check, MapPin,
+  Grid, Camera, Edit3, Settings, ExternalLink, Link2, Trash2
 } from "lucide-react";
 
-export default function CoodenestConnect({ currentUser, addXp }) {
-  const [activeTab, setActiveTab] = useState("feed"); // feed, explore, shorts, messages, collabs, challenges, profile
+export default function CoodenestConnect({ currentUser, addXp, initialTab = "feed" }) {
+  const [activeTab, setActiveTab] = useState(initialTab || "feed");
   const [posts, setPosts] = useState([]);
   const [stories, setStories] = useState([]);
   const [shorts, setShorts] = useState([]);
@@ -24,6 +25,20 @@ export default function CoodenestConnect({ currentUser, addXp }) {
   const [savedPosts, setSavedPosts] = useState({});
   const [followingState, setFollowingState] = useState({});
   const [toastMsg, setToastMsg] = useState(null);
+
+  // Post Media Upload State
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState(null);
+  const [mediaType, setMediaType] = useState("image"); // "image" | "video"
+  const photoInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+
+  const handleRemoveMedia = () => {
+    setMediaFile(null);
+    setMediaPreviewUrl(null);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  };
 
   // Direct Message State
   const [selectedChat, setSelectedChat] = useState("usr-101");
@@ -44,6 +59,103 @@ export default function CoodenestConnect({ currentUser, addXp }) {
   const [shortPlaying, setShortPlaying] = useState(true);
   const [shortMuted, setShortMuted] = useState(true);
 
+  // Sync initialTab when passed
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
+
+  // Instagram-style Profile State
+  const [profileSubTab, setProfileSubTab] = useState("posts"); // "posts" | "reels" | "saved" | "badges"
+  const [userBio, setUserBio] = useState(
+    "🌾 Village Pioneer & Rural Creator | Kodebod, Dhamtari (C.G.)\n🚀 Building AI & IoT Solutions for Farmers & Gram Panchayat\n🌐 GramEye AI Contributor | 💡 AgTech Innovations"
+  );
+  const [userWebsite, setUserWebsite] = useState("grameye.ai/@amit_sahu");
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [editName, setEditName] = useState(currentUser?.fullName || "Amit Kumar Sahu");
+  const [editBio, setEditBio] = useState(
+    "🌾 Village Pioneer & Rural Creator | Kodebod, Dhamtari (C.G.)\n🚀 Building AI & IoT Solutions for Farmers & Gram Panchayat\n🌐 GramEye AI Contributor | 💡 AgTech Innovations"
+  );
+  const [editWard, setEditWard] = useState(currentUser?.ward || "Ward 3");
+  const [editAvatar, setEditAvatar] = useState(
+    currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+  );
+  const [followersModalOpen, setFollowersModalOpen] = useState(false);
+  const [followingModalOpen, setFollowingModalOpen] = useState(false);
+  const [followersSearch, setFollowersSearch] = useState("");
+  const [followingSearch, setFollowingSearch] = useState("");
+  const [selectedPostDetail, setSelectedPostDetail] = useState(null);
+  const [detailCommentInput, setDetailCommentInput] = useState("");
+
+  const [postComments, setPostComments] = useState({
+    "post-my-janmashtami": [
+      { id: "c-1", user: "Dr. Sunita Verma", handle: "sunita_agro", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80", text: "जय श्री कृष्णा! 🙏🌾 बहुत सुंदर पोस्ट।", time: "1h ago" },
+      { id: "c-2", user: "Sarpanch Rameshwar Patel", handle: "sarpanch_kodebod", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", text: "सभी ग्रामवासियों को जन्माष्टमी की शुभकामनाएं! 🚩", time: "45m ago" },
+      { id: "c-3", user: "Tarun Sahu", handle: "tarun_dev", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", text: "Great work on the portal Amit bhaiya! 🚀", time: "25m ago" }
+    ],
+    "post-my-iot": [
+      { id: "c-4", user: "Priya Sharma", handle: "priya_ui", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80", text: "The live sensor telemetry dashboard is working smoothly!", time: "3h ago" }
+    ]
+  });
+
+  const [followersList, setFollowersList] = useState([
+    { id: "f-1", name: "Dr. Sunita Verma", handle: "sunita_agro", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80", role: "Agri Scientist", isFollowing: true },
+    { id: "f-2", name: "Sarpanch Rameshwar Patel", handle: "sarpanch_kodebod", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", role: "Panchayat Head", isFollowing: true },
+    { id: "f-3", name: "Tarun Sahu", handle: "tarun_dev", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", role: "IoT Firmware Dev", isFollowing: false },
+    { id: "f-4", name: "Priya Sharma", handle: "priya_ui", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80", role: "UI/UX Architect", isFollowing: true },
+    { id: "f-5", name: "Nitin Dewangan", handle: "nitin_ml", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80", role: "ML Engineer", isFollowing: false },
+    { id: "f-6", name: "Anita Patel", handle: "anita_kisan", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80", role: "Farmer Leader", isFollowing: true },
+    { id: "f-7", name: "Kisan Vikas Sangh", handle: "kisan_sangh_cg", avatar: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=150&auto=format&fit=crop&q=80", role: "Farmer Collective", isFollowing: false }
+  ]);
+
+  const [followingList, setFollowingList] = useState([
+    { id: "fg-1", name: "Dr. Sunita Verma", handle: "sunita_agro", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80", role: "Agri Scientist", isFollowing: true },
+    { id: "fg-2", name: "Sarpanch Rameshwar Patel", handle: "sarpanch_kodebod", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", role: "Panchayat Head", isFollowing: true },
+    { id: "fg-3", name: "Priya Sharma", handle: "priya_ui", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80", role: "UI/UX Architect", isFollowing: true },
+    { id: "fg-4", name: "Anita Patel", handle: "anita_kisan", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80", role: "Farmer Leader", isFollowing: true }
+  ]);
+
+  const [myReels, setMyReels] = useState([
+    {
+      id: "my-reel-1",
+      author: {
+        name: currentUser?.fullName || "Amit Kumar Sahu",
+        handle: (currentUser?.fullName || "amit_sahu").toLowerCase().replace(/\s+/g, "_"),
+        avatar: currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+      },
+      caption: "Mahanadi canal water release telemetry testing in Kodebod 💧⚡ #GramEye #KisanTech",
+      videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-screen-close-up-1730-large.mp4",
+      likes: 840,
+      views: "2.4K",
+      commentsCount: 38
+    },
+    {
+      id: "my-reel-2",
+      author: {
+        name: currentUser?.fullName || "Amit Kumar Sahu",
+        handle: (currentUser?.fullName || "amit_sahu").toLowerCase().replace(/\s+/g, "_"),
+        avatar: currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+      },
+      caption: "Swarna paddy lush green fields in Ward 3 🌾 Drone view! #RuralChhattisgarh",
+      videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1188-large.mp4",
+      likes: 1250,
+      views: "4.1K",
+      commentsCount: 62
+    },
+    {
+      id: "my-reel-3",
+      author: {
+        name: currentUser?.fullName || "Amit Kumar Sahu",
+        handle: (currentUser?.fullName || "amit_sahu").toLowerCase().replace(/\s+/g, "_"),
+        avatar: currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+      },
+      caption: "Panchayat solar water pump automated scheduling test ☀️💧 #GreenEnergy",
+      videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-screen-close-up-1730-large.mp4",
+      likes: 910,
+      views: "3.2K",
+      commentsCount: 45
+    }
+  ]);
+
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3500);
@@ -57,8 +169,77 @@ export default function CoodenestConnect({ currentUser, addXp }) {
         if (data.posts) setPosts(data.posts);
       })
       .catch(() => {
-        // Fallback seed
+        const authorName = currentUser?.fullName || "Amit Kumar Sahu";
+        const authorHandle = (currentUser?.fullName || "amit_sahu").toLowerCase().replace(/\s+/g, "_");
+        const authorAvatar = currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80";
+
         setPosts([
+          {
+            id: "post-my-janmashtami",
+            author: {
+              name: authorName,
+              handle: authorHandle,
+              avatar: authorAvatar,
+              verified: true,
+              badge: currentUser?.role === "admin" ? "Panchayat Admin" : "Creator"
+            },
+            mediaType: "image",
+            mediaUrl: "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=900&auto=format&fit=crop&q=80",
+            caption: "श्री कृष्ण जन्माष्टमी की हार्दिक शुभकामनाएं! 🙏✨🌾 विश्वास हमारी पहचान, सुरक्षा हमारी प्राथमिकता। कृष्ण की बंशी की मधुर धुन आपके जीवन में सुख, समृद्धि और शांति लेकर आए।",
+            hashtags: ["#Janmashtami", "#GramConnect", "#Kodebod", "#VillageLife"],
+            location: "Kodebod, CG",
+            likes: 142,
+            likedByMe: true,
+            commentsCount: 3,
+            views: 1250,
+            category: "Civic",
+            createdAt: "Just now",
+            isMyPost: true
+          },
+          {
+            id: "post-my-iot",
+            author: {
+              name: authorName,
+              handle: authorHandle,
+              avatar: authorAvatar,
+              verified: true,
+              badge: currentUser?.role === "admin" ? "Panchayat Admin" : "Creator"
+            },
+            mediaType: "image",
+            mediaUrl: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=900&auto=format&fit=crop&q=80",
+            caption: "Deployed 6 new solar soil moisture & temperature telemetry nodes across Swarna paddy fields in Ward 3! Live data streaming to GramEye AI. 📡🌾",
+            hashtags: ["#SmartFarming", "#IoT", "#GramEyeAI", "#RuralInnovation"],
+            location: "Ward 3, Kodebod",
+            likes: 284,
+            likedByMe: false,
+            commentsCount: 1,
+            views: 2100,
+            category: "Technology",
+            createdAt: "Yesterday",
+            isMyPost: true
+          },
+          {
+            id: "post-my-canal",
+            author: {
+              name: authorName,
+              handle: authorHandle,
+              avatar: authorAvatar,
+              verified: true,
+              badge: currentUser?.role === "admin" ? "Panchayat Admin" : "Creator"
+            },
+            mediaType: "video",
+            mediaUrl: "https://assets.mixkit.co/videos/preview/mixkit-software-developer-working-on-code-screen-close-up-1730-large.mp4",
+            caption: "Kurud feeder canal water release telemetry demonstration for early morning transplantation! 💧🌾",
+            hashtags: ["#Agriculture", "#CanalIrrigation", "#Kodebod"],
+            location: "Kurud Feeder, Dhamtari",
+            likes: 410,
+            likedByMe: true,
+            commentsCount: 2,
+            views: 3480,
+            category: "Agriculture",
+            createdAt: "3 days ago",
+            isMyPost: true
+          },
           {
             id: "post-1",
             author: { name: "Tarun Sahu", handle: "tarun_dev", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", verified: true, badge: "Top Creator" },
@@ -211,43 +392,45 @@ export default function CoodenestConnect({ currentUser, addXp }) {
       .then(res => res.json())
       .then(data => {
         setNewCaption(data.caption);
-        setNewHashtags(data.hashtags || ["#CoodenestConnect", "#RuralInnovation"]);
+        setNewHashtags(data.hashtags || ["#GramConnect", "#GramEyeAI", "#RuralInnovation"]);
         setAiGenerating(false);
         showToast("✨ AI Caption & Hashtags Generated!");
       })
       .catch(() => {
         setNewCaption("Bridging rural empowerment with modern digital architecture. Building sustainable futures together 🌾💻");
-        setNewHashtags(["#CoodenestConnect", "#Innovation", "#RuralTech"]);
+        setNewHashtags(["#GramConnect", "#GramEyeAI", "#RuralTech"]);
         setAiGenerating(false);
       });
   };
 
   const handlePublishPost = () => {
-    if (!newCaption.trim()) return;
+    if (!newCaption.trim() && !mediaPreviewUrl) return;
     const newP = {
       id: `post-${Date.now()}`,
       author: {
-        name: currentUser?.fullName || "Tarun Sahu",
-        handle: "my_creator",
-        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+        name: currentUser?.fullName || editName || "Amit Kumar Sahu",
+        handle: (currentUser?.fullName || editName || "amit_sahu").toLowerCase().replace(/\s+/g, "_"),
+        avatar: editAvatar || currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
         verified: true,
-        badge: "Creator"
+        badge: currentUser?.role === "admin" ? "Panchayat Admin" : "Creator"
       },
-      mediaType: "image",
-      mediaUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&auto=format&fit=crop&q=80",
-      caption: newCaption,
-      hashtags: newHashtags,
+      mediaType: mediaPreviewUrl ? mediaType : "image",
+      mediaUrl: mediaPreviewUrl || "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&auto=format&fit=crop&q=80",
+      caption: newCaption || "गाँव की नई तस्वीर और विकास की ओर बढ़ता भारत 🌾📸",
+      hashtags: newHashtags.length > 0 ? newHashtags : ["#GramConnect", "#GramEyeAI", "#Innovation"],
       location: newLocation,
       likes: 1,
       likedByMe: true,
       commentsCount: 0,
       views: 1,
       category: newCategory,
-      createdAt: "Just now"
+      createdAt: "Just now",
+      isMyPost: true
     };
     setPosts([newP, ...posts]);
     setCreateModalOpen(false);
     setNewCaption("");
+    handleRemoveMedia();
     setCreateStep(1);
     if (addXp) addXp(10);
     showToast("🚀 Post Published Successfully! +10 XP earned");
@@ -255,6 +438,251 @@ export default function CoodenestConnect({ currentUser, addXp }) {
 
   return (
     <div style={{ maxWidth: 1240, margin: "0 auto", padding: "24px 16px 80px" }}>
+      {/* Instagram Profile & Modal Styles */}
+      <style>{`
+        .ge-insta-profile-card {
+          background: #fff;
+          border-radius: 24px;
+          padding: 32px 28px;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+          border: 1px solid rgba(0,0,0,0.05);
+          margin-bottom: 24px;
+        }
+        .ge-insta-header {
+          display: flex;
+          gap: 40px;
+          align-items: flex-start;
+        }
+        .ge-insta-avatar-wrapper {
+          position: relative;
+          flex-shrink: 0;
+        }
+        .ge-insta-avatar-ring {
+          width: 110px;
+          height: 110px;
+          border-radius: 50%;
+          padding: 3.5px;
+          background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 22px rgba(220, 39, 67, 0.28);
+        }
+        .ge-insta-avatar-img {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
+          background: #fff;
+          border: 3px solid #fff;
+        }
+        .ge-insta-avatar-badge {
+          position: absolute;
+          bottom: 2px;
+          right: 2px;
+          background: var(--turmeric);
+          color: #231402;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          border: 2.5px solid #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+          transition: transform 0.2s;
+        }
+        .ge-insta-avatar-badge:hover {
+          transform: scale(1.1);
+        }
+        .ge-insta-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+        .ge-insta-top-row {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 14px;
+        }
+        .ge-insta-stats-row {
+          display: flex;
+          align-items: center;
+          gap: 32px;
+        }
+        .ge-insta-stat-item {
+          cursor: pointer;
+          font-size: 15px;
+          color: var(--ink-text);
+          transition: opacity 0.15s;
+          user-select: none;
+        }
+        .ge-insta-stat-item:hover {
+          opacity: 0.75;
+          text-decoration: underline;
+        }
+        .ge-insta-stat-num {
+          font-weight: 800;
+          color: var(--ink-text);
+          margin-right: 5px;
+        }
+        .ge-insta-bio-box {
+          font-size: 13.5px;
+          line-height: 1.55;
+          color: #222;
+        }
+        .ge-insta-highlights-row {
+          display: flex;
+          gap: 22px;
+          overflow-x: auto;
+          padding: 20px 0 6px;
+          border-top: 1px solid rgba(0,0,0,0.06);
+          margin-top: 24px;
+          scrollbar-width: none;
+        }
+        .ge-insta-highlight-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+        .ge-insta-highlight-circle {
+          width: 68px;
+          height: 68px;
+          border-radius: 50%;
+          border: 2px solid rgba(0,0,0,0.12);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #F7FAF8;
+          font-size: 26px;
+          transition: all 0.2s;
+        }
+        .ge-insta-highlight-item:hover .ge-insta-highlight-circle {
+          border-color: var(--turmeric);
+          transform: scale(1.05);
+        }
+        .ge-insta-tabs-nav {
+          display: flex;
+          justify-content: center;
+          border-top: 1px solid rgba(0,0,0,0.08);
+          margin-bottom: 22px;
+          gap: 16px;
+        }
+        .ge-insta-tab-btn {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 14px 22px;
+          background: none;
+          border: none;
+          border-top: 2px solid transparent;
+          color: var(--muted);
+          font-weight: 700;
+          font-size: 12.5px;
+          letter-spacing: 0.05em;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-transform: uppercase;
+        }
+        .ge-insta-tab-btn.active {
+          color: var(--ink-text);
+          border-top-color: var(--paddy);
+          font-weight: 800;
+        }
+        .ge-insta-posts-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+        }
+        .ge-insta-grid-item {
+          position: relative;
+          aspect-ratio: 1/1;
+          border-radius: 14px;
+          overflow: hidden;
+          background: #111;
+          cursor: pointer;
+        }
+        .ge-insta-grid-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.3s ease;
+        }
+        .ge-insta-grid-item:hover .ge-insta-grid-img {
+          transform: scale(1.03);
+        }
+        .ge-insta-grid-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 22px;
+          color: #fff;
+          font-weight: 800;
+          font-size: 15px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        .ge-insta-grid-item:hover .ge-insta-grid-overlay {
+          opacity: 1;
+        }
+        .ge-insta-reel-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 16px;
+        }
+        .ge-insta-reel-item {
+          position: relative;
+          aspect-ratio: 9/16;
+          border-radius: 16px;
+          overflow: hidden;
+          background: #0B1710;
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        }
+        .ge-insta-reel-video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        @media (max-width: 680px) {
+          .ge-insta-header {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 18px;
+          }
+          .ge-insta-stats-row {
+            justify-content: center;
+            gap: 18px;
+          }
+          .ge-insta-top-row {
+            justify-content: center;
+          }
+          .ge-insta-posts-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+          }
+          .ge-insta-grid-item {
+            border-radius: 4px;
+          }
+          .ge-insta-tab-btn {
+            padding: 12px 10px;
+            font-size: 11px;
+          }
+        }
+      `}</style>
+
       {/* Toast */}
       {toastMsg && (
         <div style={{
@@ -277,13 +705,14 @@ export default function CoodenestConnect({ currentUser, addXp }) {
       }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 24 }}>🚀</span>
+            <span style={{ fontSize: 24 }}>🌐</span>
             <span className="ge-serif" style={{ fontSize: "clamp(22px, 3.5vw, 30px)", fontWeight: 800 }}>
-              Coodenest <span style={{ color: "var(--turmeric)" }}>Connect</span>
+              Gram<span style={{ color: "var(--turmeric)" }}>Connect</span>{" "}
+              <span style={{ fontSize: "clamp(16px, 2.5vw, 22px)", opacity: 0.9, fontWeight: 700 }}>(ग्राम कनेक्ट)</span>
             </span>
           </div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", marginTop: 2 }}>
-            Create. Share. Connect. Collaborate. • Social Media + Creator Platform + AI Community
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.88)", marginTop: 4, fontWeight: 500 }}>
+            🌾 गाँव का सोशल व क्रिएटर मंच • Village Social Media + Rural Creator Hub + AI Network
           </div>
         </div>
 
@@ -314,7 +743,7 @@ export default function CoodenestConnect({ currentUser, addXp }) {
           ["messages", "💬 Messages"],
           ["collabs", "🤝 Collaborations"],
           ["challenges", "🏆 Challenges"],
-          ["profile", "👤 Creator Hub & XP"]
+          ["profile", "👤 My Profile (मेरी प्रोफ़ाइल)"]
         ].map(([key, label]) => (
           <button
             key={key}
@@ -345,8 +774,9 @@ export default function CoodenestConnect({ currentUser, addXp }) {
             }}>
               {/* Add My Story Button */}
               <div
-                onClick={() => showToast("📸 Story upload ready! Click 'Create Post' to share your story.")}
+                onClick={() => setActiveTab("profile")}
                 style={{ textAlign: "center", cursor: "pointer", flexShrink: 0 }}
+                title="View your Instagram Profile & Reels"
               >
                 <div style={{
                   width: 60, height: 60, borderRadius: "50%",
@@ -355,7 +785,7 @@ export default function CoodenestConnect({ currentUser, addXp }) {
                 }}>
                   <PlusSquare size={22} color="#8B5E34" />
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4 }}>Your Story</div>
+                <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4 }}>Your Profile</div>
               </div>
 
               {/* Story Items */}
@@ -396,7 +826,20 @@ export default function CoodenestConnect({ currentUser, addXp }) {
                 >
                   {/* Post Author Header */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div
+                      onClick={() => {
+                        if (p.isMyPost || p.author.handle === authorHandle) {
+                          setActiveTab("profile");
+                        }
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        cursor: (p.isMyPost || p.author.handle === authorHandle) ? "pointer" : "default"
+                      }}
+                      title={(p.isMyPost || p.author.handle === authorHandle) ? "Click to view your Instagram Profile" : undefined}
+                    >
                       <img
                         src={p.author.avatar}
                         alt={p.author.name}
@@ -436,12 +879,21 @@ export default function CoodenestConnect({ currentUser, addXp }) {
                   </div>
 
                   {/* Media Content */}
-                  <div style={{ maxHeight: 480, overflow: "hidden", background: "#000" }}>
-                    <img
-                      src={p.mediaUrl}
-                      alt="Post visual"
-                      style={{ width: "100%", maxHeight: 480, objectFit: "cover", display: "block" }}
-                    />
+                  <div style={{ maxHeight: 480, overflow: "hidden", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {p.mediaType === "video" ? (
+                      <video
+                        src={p.mediaUrl}
+                        controls
+                        playsInline
+                        style={{ width: "100%", maxHeight: 480, objectFit: "contain", display: "block" }}
+                      />
+                    ) : (
+                      <img
+                        src={p.mediaUrl}
+                        alt="Post visual"
+                        style={{ width: "100%", maxHeight: 480, objectFit: "cover", display: "block" }}
+                      />
+                    )}
                   </div>
 
                   {/* Actions Bar */}
@@ -895,47 +1347,957 @@ export default function CoodenestConnect({ currentUser, addXp }) {
         </div>
       )}
 
-      {/* CREATOR HUB & XP PROFILE */}
-      {activeTab === "profile" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          {/* Stats Bar */}
+      {/* INSTAGRAM-STYLE PROFILE & CREATOR HUB */}
+      {activeTab === "profile" && (() => {
+        const currentUserName = currentUser?.fullName || editName || "Amit Kumar Sahu";
+        const currentUserHandle = (currentUser?.fullName || editName || "amit_sahu").toLowerCase().replace(/\s+/g, "_");
+        const myPosts = posts.filter(
+          p => p.isMyPost === true ||
+               p.author?.name === currentUserName ||
+               p.author?.handle === currentUserHandle
+        );
+        const mySavedPosts = posts.filter(p => savedPosts[p.id]);
+
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            {/* Instagram Profile Header Card */}
+            <div className="ge-insta-profile-card">
+              <div className="ge-insta-header">
+                {/* Profile Picture with Colorful Instagram Story Ring */}
+                <div className="ge-insta-avatar-wrapper">
+                  <div className="ge-insta-avatar-ring">
+                    <img
+                      src={editAvatar || currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"}
+                      alt={currentUserName}
+                      className="ge-insta-avatar-img"
+                    />
+                  </div>
+                  <div
+                    className="ge-insta-avatar-badge"
+                    onClick={() => setEditProfileOpen(true)}
+                    title="Change Profile Photo / Edit Profile"
+                  >
+                    <Camera size={15} color="#231402" />
+                  </div>
+                </div>
+
+                {/* Profile Info Column */}
+                <div className="ge-insta-info">
+                  {/* Top Row: Handle, Badges & Action Buttons */}
+                  <div className="ge-insta-top-row">
+                    <span style={{ fontSize: "clamp(20px, 2.8vw, 24px)", fontWeight: 800, color: "var(--ink-text)", letterSpacing: "-0.02em" }}>
+                      @{currentUserHandle}
+                    </span>
+                    <CheckCircle2 size={20} color="#1F4D36" fill="rgba(31,77,54,0.18)" />
+                    <span style={{
+                      fontSize: 11.5,
+                      background: currentUser?.role === "admin" ? "rgba(232,163,61,0.2)" : "rgba(31,77,54,0.1)",
+                      color: currentUser?.role === "admin" ? "#8B5E34" : "var(--paddy)",
+                      padding: "3px 10px",
+                      borderRadius: 8,
+                      fontWeight: 800
+                    }}>
+                      {currentUser?.role === "admin" ? "🛡️ Panchayat Admin" : "🌾 Village Creator"}
+                    </span>
+
+                    <div style={{ display: "flex", gap: 8, marginLeft: "auto", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => setEditProfileOpen(true)}
+                        className="ge-btn"
+                        style={{
+                          background: "#F0F4F2",
+                          color: "var(--ink-text)",
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                          padding: "7px 14px",
+                          borderRadius: 10,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          border: "1px solid rgba(0,0,0,0.08)"
+                        }}
+                      >
+                        <Edit3 size={14} />
+                        <span>Edit Profile</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (navigator.clipboard) {
+                            navigator.clipboard.writeText(`https://grameye.ai/@${currentUserHandle}`);
+                          }
+                          showToast("📋 Profile link copied to clipboard!");
+                        }}
+                        className="ge-btn"
+                        style={{
+                          background: "#F0F4F2",
+                          color: "var(--ink-text)",
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                          padding: "7px 14px",
+                          borderRadius: 10,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          border: "1px solid rgba(0,0,0,0.08)"
+                        }}
+                      >
+                        <Share2 size={14} />
+                        <span>Share</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCreateModalOpen(true)}
+                        className="ge-btn"
+                        style={{
+                          background: "var(--turmeric)",
+                          color: "#231402",
+                          fontSize: 12.5,
+                          fontWeight: 800,
+                          padding: "7px 16px",
+                          borderRadius: 10,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6
+                        }}
+                      >
+                        <PlusSquare size={14} />
+                        <span>+ New Post</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Second Row: Interactive Instagram Stats (Posts, Followers, Following, XP) */}
+                  <div className="ge-insta-stats-row">
+                    <div
+                      className="ge-insta-stat-item"
+                      onClick={() => setProfileSubTab("posts")}
+                      title="View all posts"
+                    >
+                      <span className="ge-insta-stat-num">{myPosts.length}</span>
+                      <span>posts</span>
+                    </div>
+
+                    <div
+                      className="ge-insta-stat-item"
+                      onClick={() => setFollowersModalOpen(true)}
+                      title="Click to view followers list"
+                    >
+                      <span className="ge-insta-stat-num">{followersList.length.toLocaleString()}</span>
+                      <span>followers</span>
+                    </div>
+
+                    <div
+                      className="ge-insta-stat-item"
+                      onClick={() => setFollowingModalOpen(true)}
+                      title="Click to view following list"
+                    >
+                      <span className="ge-insta-stat-num">{followingList.length}</span>
+                      <span>following</span>
+                    </div>
+
+                    <div
+                      className="ge-insta-stat-item"
+                      onClick={() => setProfileSubTab("badges")}
+                      title="View badges & honors"
+                      style={{ color: "var(--paddy)", fontWeight: 700 }}
+                    >
+                      <span className="ge-insta-stat-num">⭐ {currentUser?.xp || 375}</span>
+                      <span>Karma XP</span>
+                    </div>
+                  </div>
+
+                  {/* Third Row: User Bio & Location */}
+                  <div className="ge-insta-bio-box">
+                    <div style={{ fontWeight: 800, fontSize: 14.5, color: "var(--ink-text)", marginBottom: 3 }}>
+                      {currentUserName}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, marginBottom: 6 }}>
+                      🌾 Rural Innovator • Public Representative
+                    </div>
+                    <div style={{ whiteSpace: "pre-line", marginBottom: 6, fontSize: 13.5, color: "#333" }}>
+                      {editBio || userBio}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", fontSize: 12.5, color: "var(--muted)" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <MapPin size={13} color="var(--paddy)" />
+                        <b>{editWard || currentUser?.ward || "Ward 3"}</b>, Kodebod, Dhamtari (CG)
+                      </span>
+                      <a
+                        href={`https://${userWebsite}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: "var(--tank)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4, fontWeight: 700 }}
+                      >
+                        <Link2 size={13} />
+                        <span>{userWebsite}</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Story Highlights Strip */}
+              <div className="ge-insta-highlights-row">
+                {[
+                  { icon: "🌾", title: "Agri IoT" },
+                  { icon: "💧", title: "Canal Flow" },
+                  { icon: "🚜", title: "Paddy Camp" },
+                  { icon: "🏛️", title: "Panchayat" },
+                  { icon: "🏆", title: "Awards" },
+                  { icon: "💡", title: "Solar Light" }
+                ].map((hl, idx) => (
+                  <div
+                    key={idx}
+                    className="ge-insta-highlight-item"
+                    onClick={() => showToast(`Opening highlight: ${hl.title}`)}
+                  >
+                    <div className="ge-insta-highlight-circle">
+                      <span>{hl.icon}</span>
+                    </div>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ink-text)" }}>
+                      {hl.title}
+                    </span>
+                  </div>
+                ))}
+                <div
+                  className="ge-insta-highlight-item"
+                  onClick={() => showToast("Add a new Story Highlight from your published stories!")}
+                >
+                  <div className="ge-insta-highlight-circle" style={{ borderStyle: "dashed", background: "rgba(232,163,61,0.08)" }}>
+                    <span style={{ fontSize: 22, color: "var(--turmeric)" }}>+</span>
+                  </div>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted)" }}>
+                    New
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Instagram Profile Tabs Navigation Bar */}
+            <div className="ge-insta-tabs-nav">
+              <button
+                type="button"
+                className={`ge-insta-tab-btn ${profileSubTab === "posts" ? "active" : ""}`}
+                onClick={() => setProfileSubTab("posts")}
+              >
+                <Grid size={15} />
+                <span>Posts ({myPosts.length})</span>
+              </button>
+
+              <button
+                type="button"
+                className={`ge-insta-tab-btn ${profileSubTab === "reels" ? "active" : ""}`}
+                onClick={() => setProfileSubTab("reels")}
+              >
+                <Film size={15} />
+                <span>Reels ({myReels.length})</span>
+              </button>
+
+              <button
+                type="button"
+                className={`ge-insta-tab-btn ${profileSubTab === "saved" ? "active" : ""}`}
+                onClick={() => setProfileSubTab("saved")}
+              >
+                <Bookmark size={15} />
+                <span>Saved ({mySavedPosts.length})</span>
+              </button>
+
+              <button
+                type="button"
+                className={`ge-insta-tab-btn ${profileSubTab === "badges" ? "active" : ""}`}
+                onClick={() => setProfileSubTab("badges")}
+              >
+                <Trophy size={15} />
+                <span>Honors & XP</span>
+              </button>
+            </div>
+
+            {/* TAB CONTENT 1: POSTS GRID */}
+            {profileSubTab === "posts" && (
+              <div>
+                {myPosts.length === 0 ? (
+                  <div style={{
+                    background: "#fff", borderRadius: 20, padding: "48px 24px", textAlign: "center",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.04)"
+                  }}>
+                    <div style={{ fontSize: 44, marginBottom: 12 }}>📸</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "var(--ink-text)", marginBottom: 6 }}>
+                      No Posts Yet
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--muted)", maxWidth: 360, margin: "0 auto 18px" }}>
+                      When you share photos and videos from village developments or agricultural tech, they will appear on your profile.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCreateModalOpen(true)}
+                      className="ge-btn"
+                      style={{ background: "var(--paddy)", color: "#fff", fontWeight: 800, padding: "10px 22px", borderRadius: 12 }}
+                    >
+                      Share Your First Post 🚀
+                    </button>
+                  </div>
+                ) : (
+                  <div className="ge-insta-posts-grid">
+                    {myPosts.map((p) => (
+                      <div
+                        key={p.id}
+                        className="ge-insta-grid-item"
+                        onClick={() => setSelectedPostDetail(p)}
+                        title="Click to view post"
+                      >
+                        {p.mediaType === "video" ? (
+                          <video
+                            src={p.mediaUrl}
+                            muted
+                            playsInline
+                            className="ge-insta-grid-img"
+                          />
+                        ) : (
+                          <img
+                            src={p.mediaUrl}
+                            alt={p.caption}
+                            className="ge-insta-grid-img"
+                            loading="lazy"
+                          />
+                        )}
+
+                        {/* Video Icon Badge */}
+                        {p.mediaType === "video" && (
+                          <div style={{
+                            position: "absolute", top: 10, right: 10,
+                            background: "rgba(0,0,0,0.65)", color: "#fff",
+                            borderRadius: 8, padding: "4px 7px", fontSize: 11,
+                            display: "flex", alignItems: "center", gap: 4, zIndex: 2
+                          }}>
+                            <Film size={12} />
+                            <span>Video</span>
+                          </div>
+                        )}
+
+                        {/* Hover Overlay with Likes & Comments Count */}
+                        <div className="ge-insta-grid-overlay">
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Heart size={18} fill="#fff" color="#fff" />
+                            <span>{p.likes}</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <MessageCircle size={18} fill="#fff" color="#fff" />
+                            <span>{(postComments[p.id] || []).length || p.commentsCount || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT 2: REELS GRID */}
+            {profileSubTab === "reels" && (
+              <div className="ge-insta-reel-grid">
+                {myReels.map((reel) => (
+                  <div
+                    key={reel.id}
+                    className="ge-insta-reel-item"
+                    onClick={() => {
+                      // Switch to shorts view with this video
+                      setActiveTab("shorts");
+                      showToast(`Playing Reel: ${reel.caption.slice(0, 30)}...`);
+                    }}
+                    title="Click to watch Reel"
+                  >
+                    <video
+                      src={reel.videoUrl}
+                      muted
+                      playsInline
+                      className="ge-insta-reel-video"
+                    />
+                    <div style={{
+                      position: "absolute", inset: 0,
+                      background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%)",
+                      display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 14, color: "#fff"
+                    }}>
+                      <div style={{ alignSelf: "flex-end", background: "rgba(0,0,0,0.5)", padding: "3px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                        🎬 Reel
+                      </div>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 800, marginBottom: 4 }}>
+                          <Play size={14} fill="#fff" />
+                          <span>{reel.views} views</span>
+                        </div>
+                        <div style={{ fontSize: 11.5, lineHeight: 1.35, opacity: 0.9, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                          {reel.caption}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* TAB CONTENT 3: SAVED POSTS GRID */}
+            {profileSubTab === "saved" && (
+              <div>
+                {mySavedPosts.length === 0 ? (
+                  <div style={{
+                    background: "#fff", borderRadius: 20, padding: "48px 24px", textAlign: "center",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.04)"
+                  }}>
+                    <div style={{ fontSize: 44, marginBottom: 12 }}>🔖</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "var(--ink-text)", marginBottom: 6 }}>
+                      Save Posts
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--muted)", maxWidth: 360, margin: "0 auto" }}>
+                      Save photos and videos from the feed that you want to refer back to later. Only you can see what you have saved.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="ge-insta-posts-grid">
+                    {mySavedPosts.map((p) => (
+                      <div
+                        key={p.id}
+                        className="ge-insta-grid-item"
+                        onClick={() => setSelectedPostDetail(p)}
+                      >
+                        <img
+                          src={p.mediaUrl}
+                          alt={p.caption}
+                          className="ge-insta-grid-img"
+                        />
+                        <div className="ge-insta-grid-overlay">
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <Heart size={18} fill="#fff" color="#fff" />
+                            <span>{p.likes}</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <MessageCircle size={18} fill="#fff" color="#fff" />
+                            <span>{p.commentsCount}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT 4: BADGES & XP HONORS */}
+            {profileSubTab === "badges" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {/* Stats Grid */}
+                <div style={{
+                  background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 6px 24px rgba(0,0,0,0.05)",
+                  display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, textAlign: "center"
+                }} className="ge-2col">
+                  <div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: "var(--paddy)" }}>{currentUser?.xp || 375} XP</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Creator Karma</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: "var(--turmeric)" }}>Level 4</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Creator Level</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: "var(--tank)" }}>3.2K</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Total Post Reach</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: "#D64545" }}>{myPosts.reduce((acc, c) => acc + (c.likes || 0), 0)}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Applauds & Likes</div>
+                  </div>
+                </div>
+
+                {/* Badges Earned */}
+                <div style={{ background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 6px 24px rgba(0,0,0,0.05)" }}>
+                  <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 14 }}>🏆 Creator Badges & Honors</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                    {[
+                      { name: "🌾 Grassroots Innovator", desc: "Posted 5+ rural technology solutions" },
+                      { name: "🤖 AI Explorer", desc: "Used AI Vision & Caption tools" },
+                      { name: "🤝 Active Collaborator", desc: "Joined an open-source project" },
+                      { name: "⭐ Kodebod Pioneer", desc: "Founding member of GramConnect (ग्राम कनेक्ट)" },
+                      { name: "🛡️ Panchayat Champion", desc: "Verified community official & civic contributor" }
+                    ].map(b => (
+                      <div key={b.name} style={{ background: "#F4F7F5", padding: "12px 18px", borderRadius: 14, border: "1px solid rgba(31,77,54,0.1)" }}>
+                        <div style={{ fontWeight: 800, fontSize: 13, color: "var(--paddy)" }}>{b.name}</div>
+                        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{b.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* INSTAGRAM POST DETAIL MODAL (LIGHTBOX) */}
+      {selectedPostDetail && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 99999,
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+            backdropFilter: "blur(8px)"
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedPostDetail(null);
+          }}
+        >
           <div style={{
-            background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 6px 24px rgba(0,0,0,0.05)",
-            display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, textAlign: "center"
-          }} className="ge-2col">
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: "var(--paddy)" }}>340 XP</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Creator Karma</div>
+            background: "#fff", borderRadius: 20, width: "100%", maxWidth: 960, maxHeight: "88vh",
+            display: "grid", gridTemplateColumns: "1.2fr 1fr", overflow: "hidden",
+            boxShadow: "0 25px 60px rgba(0,0,0,0.5)"
+          }} className="ge-lightbox-grid">
+            {/* Left Media Area */}
+            <div style={{ background: "#0E1A13", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", minHeight: 380 }}>
+              {selectedPostDetail.mediaType === "video" ? (
+                <video
+                  src={selectedPostDetail.mediaUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  style={{ width: "100%", maxHeight: "85vh", objectFit: "contain" }}
+                />
+              ) : (
+                <img
+                  src={selectedPostDetail.mediaUrl}
+                  alt={selectedPostDetail.caption}
+                  style={{ width: "100%", maxHeight: "85vh", objectFit: "contain" }}
+                />
+              )}
             </div>
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: "var(--turmeric)" }}>Level 4</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Creator Level</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: "var(--tank)" }}>1.8K</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Post Reach</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: "#D64545" }}>89</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Applauds & Likes</div>
+
+            {/* Right Interactive Comments & Info Area */}
+            <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fff" }}>
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <img
+                    src={selectedPostDetail.author?.avatar || editAvatar}
+                    alt={selectedPostDetail.author?.name}
+                    style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 13.5 }}>{selectedPostDetail.author?.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>📍 {selectedPostDetail.location || "Kodebod, CG"}</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPostDetail(null)}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+                >
+                  <X size={20} color="var(--muted)" />
+                </button>
+              </div>
+
+              {/* Scrollable Comments & Caption Area */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "14px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Author's Caption */}
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <img
+                    src={selectedPostDetail.author?.avatar || editAvatar}
+                    alt={selectedPostDetail.author?.name}
+                    style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                  />
+                  <div style={{ fontSize: 13, lineHeight: 1.45 }}>
+                    <span style={{ fontWeight: 800, marginRight: 6 }}>{selectedPostDetail.author?.name}</span>
+                    <span>{selectedPostDetail.caption}</span>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                      {(selectedPostDetail.hashtags || []).map(h => (
+                        <span key={h} style={{ fontSize: 12, color: "var(--tank)", fontWeight: 700 }}>{h}</span>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>{selectedPostDetail.createdAt || "Recently"}</div>
+                  </div>
+                </div>
+
+                {/* Existing Comments */}
+                {(postComments[selectedPostDetail.id] || []).map((c) => (
+                  <div key={c.id} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <img
+                      src={c.avatar}
+                      alt={c.user}
+                      style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                    />
+                    <div style={{ flex: 1, fontSize: 13, lineHeight: 1.4 }}>
+                      <span style={{ fontWeight: 800, marginRight: 6 }}>{c.user}</span>
+                      <span>{c.text}</span>
+                      <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2 }}>{c.time}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom Action Bar */}
+              <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", padding: "12px 18px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleLike(selectedPostDetail.id)}
+                      style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}
+                    >
+                      <Heart
+                        size={22}
+                        color={selectedPostDetail.likedByMe ? "#E0245E" : "var(--ink-text)"}
+                        fill={selectedPostDetail.likedByMe ? "#E0245E" : "none"}
+                      />
+                    </button>
+                    <MessageCircle size={22} color="var(--ink-text)" style={{ cursor: "pointer" }} />
+                    <Share2
+                      size={22}
+                      color="var(--ink-text)"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => showToast("Link copied to clipboard!")}
+                    />
+                  </div>
+                  <Bookmark
+                    size={22}
+                    color={savedPosts[selectedPostDetail.id] ? "var(--turmeric)" : "var(--ink-text)"}
+                    fill={savedPosts[selectedPostDetail.id] ? "var(--turmeric)" : "none"}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleSave(selectedPostDetail.id)}
+                  />
+                </div>
+
+                <div style={{ fontWeight: 800, fontSize: 13.5, marginBottom: 2 }}>
+                  {selectedPostDetail.likes} likes
+                </div>
+                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>
+                  {selectedPostDetail.createdAt || "AUGUST 2026"}
+                </div>
+              </div>
+
+              {/* Add Comment Input Bar */}
+              <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", padding: "10px 18px", display: "flex", gap: 10, alignItems: "center" }}>
+                <Smile size={18} color="var(--muted)" style={{ cursor: "pointer" }} />
+                <input
+                  type="text"
+                  placeholder="Add a comment... (टिप्पणी जोड़ें)"
+                  value={detailCommentInput}
+                  onChange={(e) => setDetailCommentInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && detailCommentInput.trim()) {
+                      const newC = {
+                        id: `c-${Date.now()}`,
+                        user: currentUser?.fullName || editName || "Amit Kumar Sahu",
+                        handle: (currentUser?.fullName || editName || "amit_sahu").toLowerCase().replace(/\s+/g, "_"),
+                        avatar: editAvatar || currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+                        text: detailCommentInput.trim(),
+                        time: "Just now"
+                      };
+                      setPostComments(prev => ({
+                        ...prev,
+                        [selectedPostDetail.id]: [...(prev[selectedPostDetail.id] || []), newC]
+                      }));
+                      setPosts(prev => prev.map(p => p.id === selectedPostDetail.id ? { ...p, commentsCount: (p.commentsCount || 0) + 1 } : p));
+                      setDetailCommentInput("");
+                      showToast("💬 Comment posted!");
+                    }
+                  }}
+                  style={{ flex: 1, border: "none", outline: "none", fontSize: 13, background: "transparent" }}
+                />
+                <button
+                  type="button"
+                  disabled={!detailCommentInput.trim()}
+                  onClick={() => {
+                    if (!detailCommentInput.trim()) return;
+                    const newC = {
+                      id: `c-${Date.now()}`,
+                      user: currentUser?.fullName || editName || "Amit Kumar Sahu",
+                      handle: (currentUser?.fullName || editName || "amit_sahu").toLowerCase().replace(/\s+/g, "_"),
+                      avatar: editAvatar || currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+                      text: detailCommentInput.trim(),
+                      time: "Just now"
+                    };
+                    setPostComments(prev => ({
+                      ...prev,
+                      [selectedPostDetail.id]: [...(prev[selectedPostDetail.id] || []), newC]
+                    }));
+                    setPosts(prev => prev.map(p => p.id === selectedPostDetail.id ? { ...p, commentsCount: (p.commentsCount || 0) + 1 } : p));
+                    setDetailCommentInput("");
+                    showToast("💬 Comment posted!");
+                  }}
+                  style={{
+                    background: "none", border: "none",
+                    color: detailCommentInput.trim() ? "var(--tank)" : "#ccc",
+                    fontWeight: 800, fontSize: 13, cursor: detailCommentInput.trim() ? "pointer" : "default"
+                  }}
+                >
+                  Post
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Badges Earned */}
-          <div style={{ background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 6px 24px rgba(0,0,0,0.05)" }}>
-            <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 14 }}>🏆 Creator Badges & Honors</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              {[
-                { name: "🌾 Grassroots Innovator", desc: "Posted 5+ rural technology solutions" },
-                { name: "🤖 AI Explorer", desc: "Used AI Vision & Caption tools" },
-                { name: "🤝 Active Collaborator", desc: "Joined an open-source project" },
-                { name: "⭐ Kodebod Pioneer", desc: "Founding member of Coodenest Connect" }
-              ].map(b => (
-                <div key={b.name} style={{ background: "#F4F7F5", padding: "12px 18px", borderRadius: 14, border: "1px solid rgba(31,77,54,0.1)" }}>
-                  <div style={{ fontWeight: 800, fontSize: 13, color: "var(--paddy)" }}>{b.name}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{b.desc}</div>
+      {/* FOLLOWERS LIST MODAL */}
+      {followersModalOpen && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 99999,
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 16
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setFollowersModalOpen(false);
+          }}
+        >
+          <div style={{
+            background: "#fff", borderRadius: 22, width: "100%", maxWidth: 440,
+            overflow: "hidden", boxShadow: "0 25px 60px rgba(0,0,0,0.4)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>Followers ({followersList.length})</div>
+              <button
+                type="button"
+                onClick={() => setFollowersModalOpen(false)}
+                style={{ background: "none", border: "none", cursor: "pointer" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ padding: "12px 20px" }}>
+              <input
+                type="text"
+                placeholder="Search followers..."
+                value={followersSearch}
+                onChange={(e) => setFollowersSearch(e.target.value)}
+                style={{
+                  width: "100%", padding: "9px 14px", borderRadius: 10,
+                  border: "1px solid rgba(0,0,0,0.12)", fontSize: 13, outline: "none",
+                  boxSizing: "border-box"
+                }}
+              />
+            </div>
+
+            {/* List */}
+            <div style={{ maxHeight: 380, overflowY: "auto", padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+              {followersList
+                .filter(f => f.name.toLowerCase().includes(followersSearch.toLowerCase()) || f.handle.toLowerCase().includes(followersSearch.toLowerCase()))
+                .map((user) => (
+                  <div key={user.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover" }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 13.5 }}>{user.name}</div>
+                        <div style={{ fontSize: 11.5, color: "var(--muted)" }}>@{user.handle} • {user.role}</div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFollowersList(prev => prev.map(f => f.id === user.id ? { ...f, isFollowing: !f.isFollowing } : f));
+                        showToast(user.isFollowing ? `Unfollowed @${user.handle}` : `Now following @${user.handle}!`);
+                      }}
+                      className="ge-btn"
+                      style={{
+                        padding: "6px 14px", fontSize: 12, borderRadius: 8, fontWeight: 700,
+                        background: user.isFollowing ? "#F0F4F2" : "var(--paddy)",
+                        color: user.isFollowing ? "var(--ink-text)" : "#fff"
+                      }}
+                    >
+                      {user.isFollowing ? "Following" : "Follow Back"}
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FOLLOWING LIST MODAL */}
+      {followingModalOpen && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 99999,
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 16
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setFollowingModalOpen(false);
+          }}
+        >
+          <div style={{
+            background: "#fff", borderRadius: 22, width: "100%", maxWidth: 440,
+            overflow: "hidden", boxShadow: "0 25px 60px rgba(0,0,0,0.4)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>Following ({followingList.length})</div>
+              <button
+                type="button"
+                onClick={() => setFollowingModalOpen(false)}
+                style={{ background: "none", border: "none", cursor: "pointer" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ padding: "12px 20px" }}>
+              <input
+                type="text"
+                placeholder="Search following..."
+                value={followingSearch}
+                onChange={(e) => setFollowingSearch(e.target.value)}
+                style={{
+                  width: "100%", padding: "9px 14px", borderRadius: 10,
+                  border: "1px solid rgba(0,0,0,0.12)", fontSize: 13, outline: "none",
+                  boxSizing: "border-box"
+                }}
+              />
+            </div>
+
+            {/* List */}
+            <div style={{ maxHeight: 380, overflowY: "auto", padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+              {followingList
+                .filter(f => f.name.toLowerCase().includes(followingSearch.toLowerCase()) || f.handle.toLowerCase().includes(followingSearch.toLowerCase()))
+                .map((user) => (
+                  <div key={user.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover" }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 13.5 }}>{user.name}</div>
+                        <div style={{ fontSize: 11.5, color: "var(--muted)" }}>@{user.handle} • {user.role}</div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFollowingList(prev => prev.filter(f => f.id !== user.id));
+                        showToast(`Unfollowed @${user.handle}`);
+                      }}
+                      className="ge-btn"
+                      style={{
+                        padding: "6px 14px", fontSize: 12, borderRadius: 8, fontWeight: 700,
+                        background: "#F0F4F2", color: "var(--ink-text)", border: "1px solid rgba(0,0,0,0.1)"
+                      }}
+                    >
+                      Following
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT PROFILE MODAL */}
+      {editProfileOpen && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 99999,
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 16
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditProfileOpen(false);
+          }}
+        >
+          <div style={{
+            background: "#fff", borderRadius: 22, width: "100%", maxWidth: 500,
+            overflow: "hidden", boxShadow: "0 25px 60px rgba(0,0,0,0.4)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 22px", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+              <div style={{ fontWeight: 800, fontSize: 16 }}>✏️ Edit Profile (प्रोफ़ाइल संपादित करें)</div>
+              <button
+                type="button"
+                onClick={() => setEditProfileOpen(false)}
+                style={{ background: "none", border: "none", cursor: "pointer" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 5 }}>Full Name (पूरा नाम)</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.15)", fontSize: 13.5, boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 5 }}>Bio (परिचय)</label>
+                <textarea
+                  rows={3}
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.15)", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 5 }}>Ward (वार्ड)</label>
+                  <input
+                    type="text"
+                    value={editWard}
+                    onChange={(e) => setEditWard(e.target.value)}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.15)", fontSize: 13, boxSizing: "border-box" }}
+                  />
                 </div>
-              ))}
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 5 }}>Website / Link</label>
+                  <input
+                    type="text"
+                    value={userWebsite}
+                    onChange={(e) => setUserWebsite(e.target.value)}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.15)", fontSize: 13, boxSizing: "border-box" }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 5 }}>Profile Photo URL</label>
+                <input
+                  type="text"
+                  value={editAvatar}
+                  onChange={(e) => setEditAvatar(e.target.value)}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.15)", fontSize: 12.5, boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setEditProfileOpen(false)}
+                  className="ge-btn"
+                  style={{ padding: "9px 18px", borderRadius: 10, background: "#eee", fontSize: 13 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserBio(editBio);
+                    setEditProfileOpen(false);
+                    showToast("✅ Profile updated successfully!");
+                  }}
+                  className="ge-btn"
+                  style={{ padding: "9px 22px", borderRadius: 10, background: "var(--paddy)", color: "#fff", fontWeight: 800, fontSize: 13 }}
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1016,7 +2378,7 @@ export default function CoodenestConnect({ currentUser, addXp }) {
               padding: "16px 22px", borderBottom: "1px solid rgba(0,0,0,0.08)"
             }}>
               <div style={{ fontWeight: 800, fontSize: 16 }}>
-                🚀 Create Post on Coodenest Connect
+                🚀 Create Post on GramConnect (ग्राम कनेक्ट)
               </div>
               <button
                 onClick={() => setCreateModalOpen(false)}
@@ -1027,7 +2389,7 @@ export default function CoodenestConnect({ currentUser, addXp }) {
             </div>
 
             {/* Modal Body */}
-            <div style={{ padding: 22 }}>
+            <div style={{ padding: 22, maxHeight: "82vh", overflowY: "auto" }}>
               {/* AI Assistant Banner */}
               <div style={{
                 background: "linear-gradient(135deg, rgba(31,77,54,0.08) 0%, rgba(232,163,61,0.12) 100%)",
@@ -1037,7 +2399,7 @@ export default function CoodenestConnect({ currentUser, addXp }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <Sparkles size={18} color="#8B5E34" />
                   <span style={{ fontSize: 12.5, fontWeight: 700, color: "#8B5E34" }}>
-                    Coodenest AI Assistant
+                    GramConnect AI Assistant
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
@@ -1058,6 +2420,123 @@ export default function CoodenestConnect({ currentUser, addXp }) {
                     ✨ Technical
                   </button>
                 </div>
+              </div>
+
+              {/* Photo / Video Attachment Controls */}
+              <div style={{ marginBottom: 16, background: "#F7FAF8", padding: 14, borderRadius: 14, border: "1px dashed rgba(31,77,54,0.25)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <label style={{ fontSize: 12.5, fontWeight: 800, color: "var(--ink-text)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <ImageIcon size={15} color="var(--paddy)" /> फ़ोटो या वीडियो अपलोड करें (Upload Media)
+                  </label>
+                  {mediaPreviewUrl && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveMedia}
+                      style={{ background: "rgba(214,69,69,0.1)", color: "#D64545", border: "none", borderRadius: 8, padding: "3px 8px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                    >
+                      ❌ हटाएं (Remove)
+                    </button>
+                  )}
+                </div>
+
+                {/* Hidden Native File Inputs */}
+                <input
+                  type="file"
+                  ref={photoInputRef}
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setMediaType("image");
+                      setMediaFile(file);
+                      setMediaPreviewUrl(URL.createObjectURL(file));
+                      showToast("📸 फोटो सफलतापूर्वक चुनी गई (Photo attached)!");
+                    }
+                  }}
+                />
+                <input
+                  type="file"
+                  ref={videoInputRef}
+                  accept="video/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setMediaType("video");
+                      setMediaFile(file);
+                      setMediaPreviewUrl(URL.createObjectURL(file));
+                      showToast("🎥 वीडियो सफलतापूर्वक चुना गया (Video attached)!");
+                    }
+                  }}
+                />
+
+                {/* Buttons to open file browser */}
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    className="ge-btn"
+                    style={{
+                      flex: 1, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      padding: "10px 14px", borderRadius: 10, border: "1.5px solid #2E6B4A",
+                      background: mediaType === "image" && mediaPreviewUrl ? "rgba(46,107,74,0.15)" : "#fff",
+                      color: "#1F4D36", fontWeight: 700, fontSize: 13, cursor: "pointer"
+                    }}
+                  >
+                    <ImageIcon size={17} color="#1F4D36" />
+                    <span>📷 फ़ोटो जोड़ें (Add Photo)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => videoInputRef.current?.click()}
+                    className="ge-btn"
+                    style={{
+                      flex: 1, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E8A33D",
+                      background: mediaType === "video" && mediaPreviewUrl ? "rgba(232,163,61,0.2)" : "#fff",
+                      color: "#8B5E34", fontWeight: 700, fontSize: 13, cursor: "pointer"
+                    }}
+                  >
+                    <Video size={17} color="#8B5E34" />
+                    <span>🎥 वीडियो जोड़ें (Add Video)</span>
+                  </button>
+                </div>
+
+                {/* Live Media Preview if selected */}
+                {mediaPreviewUrl && (
+                  <div style={{
+                    marginTop: 12, borderRadius: 12, overflow: "hidden", position: "relative",
+                    background: "#000", border: "1.5px solid rgba(0,0,0,0.1)"
+                  }}>
+                    {mediaType === "video" ? (
+                      <video
+                        src={mediaPreviewUrl}
+                        controls
+                        playsInline
+                        style={{ width: "100%", maxHeight: 220, display: "block", objectFit: "contain" }}
+                      />
+                    ) : (
+                      <img
+                        src={mediaPreviewUrl}
+                        alt="Selected media"
+                        style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block" }}
+                      />
+                    )}
+                    <div style={{
+                      position: "absolute", bottom: 8, left: 8, right: 8,
+                      background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)",
+                      color: "#fff", padding: "4px 10px", borderRadius: 8, fontSize: 11,
+                      display: "flex", justifyContent: "space-between", alignItems: "center"
+                    }}>
+                      <span>{mediaType === "video" ? "🎥 वीडियो फ़ाइल (Video)" : "📷 फ़ोटो फ़ाइल (Photo)"}</span>
+                      <span style={{ opacity: 0.85, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {mediaFile?.name || "Ready to upload"}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Caption Textarea */}
